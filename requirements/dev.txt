@@ -1,0 +1,4 @@
+-r base.txt
+ruff==0.4.4
+black==24.4.2
+pre-commit==3.7.1

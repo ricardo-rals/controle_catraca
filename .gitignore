@@ -54,3 +54,7 @@ Thumbs.db
 # Migrations (optional — remove if you want to track them)
 */migrations/*.py
 !*/migrations/__init__.py
+
+.ruff_cache/
+
+*sprint1.md
