@@ -11,5 +11,22 @@ services:
     volumes:
       - cac_pgdata:/var/lib/postgresql/data
 
+  web:
+      build:
+        context: .
+        dockerfile: infra/Dockerfile
+      container_name: cac_web
+      command: python manage.py runserver 0.0.0.0:8000
+      volumes:
+        - .:/app
+      ports:
+        - "8000:8000"
+      env_file:
+        - .env
+      environment:
+        - DATABASE_URL=postgres://cac_user:cac_password@db:5432/cac_db
+      depends_on:
+        - db
+
 volumes:
   cac_pgdata:
