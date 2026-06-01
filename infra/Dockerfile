@@ -3,8 +3,8 @@ RUN apt-get update && apt-get install -y git
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-COPY requirements/base.txt requirements/base.txt
-RUN pip install --no-cache-dir -r requirements/base.txt
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/dev.txt
 
 COPY . .
 

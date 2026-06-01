@@ -1,9 +1,17 @@
+
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+  - repo: local
     hooks:
-      - id: ruff
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
+      - id: ruff-docker
+        name: ruff (container)
+        entry: docker compose exec -T web ruff check --fix .
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: black-docker
+        name: black (container)
+        entry: docker compose exec -T web black .
+        language: system
+        types: [python]
+        pass_filenames: false
