@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="login-container">
+    <h1>Sistema CAC</h1>
+    <p>Controle de Acesso do Campus</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Entrar</button>
+    </form>
+
+    {% if form.errors %}
+        <div class="error">
+            <p>Usuário ou senha inválidos. Tente novamente.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

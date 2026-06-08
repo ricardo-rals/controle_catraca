@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<p>Bem-vindo, {{ user.get_full_name|default:user.username }}.</p>
+<form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit">Sair</button>
+</form>
+{% endblock %}
