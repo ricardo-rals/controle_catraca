@@ -339,4 +339,19 @@ controle-catraca/
 
 ---
 
+## 🗄️ Fluxo de Banco de Dados (Migrations)
+
+Como a nossa infraestrutura roda em Docker, os comandos do Django devem ser executados por dentro dos contêineres.
+
+**1. Para gerar novas migrations (após alterar qualquer models.py):**
+`docker exec -it cac_web python manage.py makemigrations`
+
+**2. Para aplicar as migrations no banco de dados:**
+`docker exec -it cac_web python manage.py migrate`
+
+**3. Acesso direto ao banco (dbshell):**
+Caso precise visualizar as tabelas diretamente no PostgreSQL, acesse o contêiner do banco utilizando as credenciais do projeto:
+`docker exec -it cac-db psql -U cac_user -d cac_db`
+*(Lá dentro, utilize o comando \dt para listar as relações e \q para sair).*
+
 Qualquer dúvida que não esteja aqui, traga no canal técnico do time.
