@@ -24,6 +24,7 @@ class RegistroAcessoAdmin(admin.ModelAdmin):
     search_fields = ("identificador_pseudonimizado",)
     date_hierarchy = "timestamp"
 
+
 @admin.register(Pessoa)
 class PessoaAdmin(admin.ModelAdmin):
     list_display = ("numero_credencial", "nome", "estrutura_organizacional")

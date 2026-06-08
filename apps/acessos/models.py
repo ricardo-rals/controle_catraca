@@ -1,6 +1,7 @@
 from django.db import models
 from apps.importacoes.models import Importacao
 
+
 class Pessoa(models.Model):
     """Dados originais da pessoa cadastrada no sistema de catracas.
     Acesso restrito por perfil. O RegistroAcesso referencia apenas
@@ -28,6 +29,7 @@ class Pessoa(models.Model):
 
     def __str__(self):
         return f"{self.nome} ({self.numero_credencial})"
+
 
 class PontoAcesso(models.Model):
     # Critério 2 + Mapeamento DBML (equipamento, area_origem, etc)
@@ -107,6 +109,7 @@ class RegistroAcesso(models.Model):
 
     def __str__(self):
         return f"Acesso {self.tipo_acesso} - Credencial {self.identificador_pseudonimizado[:8]}..."
+
 
 class RegraHorario(models.Model):
     """Horário de funcionamento por grupo de equipamento e dia da semana.
