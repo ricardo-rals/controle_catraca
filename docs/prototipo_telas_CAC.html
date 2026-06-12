@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protótipo — Sistema CAC | Controle de Acesso IFBA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --verde: #0a7d4d;
+    --verde-claro: #12a767;
+    --verde-escuro: #065c38;
+    --tinta: #0d1b16;
+    --cinza: #5d6b64;
+    --cinza-claro: #eef2f0;
+    --linha: #dde5e1;
+    --branco: #ffffff;
+    --bg: #f5f8f6;
+    --amarelo: #f5a623;
+    --vermelho: #e0524d;
+    --azul: #2d7dd2;
+    --sombra: 0 1px 3px rgba(13,27,22,.08), 0 8px 24px rgba(13,27,22,.06);
+    --radius: 14px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family:'DM Sans', sans-serif;
+    background:var(--bg);
+    color:var(--tinta);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3,h4 { font-family:'Sora', sans-serif; }
+
+  /* Barra superior de navegação do protótipo */
+  .proto-nav {
+    position:sticky; top:0; z-index:100;
+    background:var(--tinta);
+    padding:14px 28px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    box-shadow:0 2px 12px rgba(0,0,0,.15);
+  }
+  .proto-nav .marca {
+    color:var(--branco);
+    font-family:'Sora'; font-weight:700; font-size:15px;
+    margin-right:20px; letter-spacing:.5px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .proto-nav .marca .logo {
+    width:26px; height:26px; border-radius:7px;
+    background:linear-gradient(135deg, var(--verde-claro), var(--verde));
+    display:grid; place-items:center; font-size:14px;
+  }
+  .proto-nav button {
+    font-family:'DM Sans'; font-weight:600; font-size:13px;
+    color:#9fb0a8; background:transparent;
+    border:1px solid transparent; padding:8px 14px; border-radius:9px;
+    cursor:pointer; transition:all .18s;
+  }
+  .proto-nav button:hover { color:var(--branco); background:rgba(255,255,255,.08); }
+  .proto-nav button.ativo { color:var(--branco); background:var(--verde); }
+  .proto-nav .tag {
+    margin-left:auto; color:#7d8d85; font-size:11px;
+    font-weight:500; letter-spacing:1px; text-transform:uppercase;
+  }
+
+  .tela { display:none; animation:surge .4s ease; }
+  .tela.visivel { display:block; }
+  @keyframes surge { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ===================== LOGIN ===================== */
+  .login-wrap {
+    min-height:calc(100vh - 56px);
+    display:grid; grid-template-columns:1fr 1fr;
+  }
+  .login-arte {
+    background:
+      radial-gradient(circle at 20% 30%, rgba(18,167,103,.4), transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(6,92,56,.5), transparent 50%),
+      linear-gradient(150deg, var(--verde-escuro), var(--tinta));
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:56px;
+  }
+  .login-arte::before {
+    content:""; position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(255,255,255,.03) 38px, rgba(255,255,255,.03) 39px),
+      repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,.03) 38px, rgba(255,255,255,.03) 39px);
+  }
+  .login-arte .topo { position:relative; color:#fff; }
+  .login-arte .topo .logo-grande {
+    width:54px; height:54px; border-radius:14px;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(8px);
+    display:grid; place-items:center; font-size:26px; margin-bottom:24px;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .login-arte h2 { font-size:34px; font-weight:800; line-height:1.15; margin-bottom:14px; }
+  .login-arte p { color:rgba(255,255,255,.75); font-size:15px; max-width:380px; }
+  .login-arte .rodape { position:relative; color:rgba(255,255,255,.5); font-size:12.5px; }
+  .login-arte .stats { position:relative; display:flex; gap:32px; margin-top:28px; }
+  .login-arte .stats div .n { font-family:'Sora'; font-size:28px; font-weight:700; color:#fff; }
+  .login-arte .stats div .l { font-size:12px; color:rgba(255,255,255,.6); }
+
+  .login-form {
+    background:var(--branco);
+    display:flex; flex-direction:column; justify-content:center;
+    padding:56px 64px;
+  }
+  .login-form .selo {
+    font-size:12px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--verde); margin-bottom:10px;
+  }
+  .login-form h3 { font-size:27px; font-weight:700; margin-bottom:6px; }
+  .login-form .sub { color:var(--cinza); font-size:14.5px; margin-bottom:34px; }
+  .campo { margin-bottom:20px; }
+  .campo label { display:block; font-size:13px; font-weight:600; margin-bottom:7px; color:var(--tinta); }
+  .campo input {
+    width:100%; padding:13px 15px; font-size:14.5px; font-family:'DM Sans';
+    border:1.5px solid var(--linha); border-radius:11px; background:var(--bg);
+    transition:all .18s;
+  }
+  .campo input:focus { outline:none; border-color:var(--verde); background:#fff; box-shadow:0 0 0 4px rgba(10,125,77,.1); }
+  .login-form .linha-aux { display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; font-size:13px; }
+  .login-form .linha-aux label { color:var(--cinza); display:flex; align-items:center; gap:7px; }
+  .login-form .linha-aux a { color:var(--verde); text-decoration:none; font-weight:600; }
+  .btn-principal {
+    width:100%; padding:14px; font-size:15px; font-weight:700; font-family:'Sora';
+    color:#fff; background:var(--verde); border:none; border-radius:11px; cursor:pointer;
+    transition:all .18s;
+  }
+  .btn-principal:hover { background:var(--verde-escuro); transform:translateY(-1px); }
+  .login-form .nota-rodape { margin-top:28px; font-size:12.5px; color:var(--cinza); text-align:center; }
+
+  /* ===================== SHELL APP ===================== */
+  .app { display:grid; grid-template-columns:248px 1fr; min-height:calc(100vh - 56px); }
+  .sidebar { background:var(--tinta); padding:26px 18px; display:flex; flex-direction:column; }
+  .sidebar .marca-app {
+    display:flex; align-items:center; gap:11px; padding:0 8px; margin-bottom:30px;
+    color:#fff; font-family:'Sora'; font-weight:700; font-size:16px;
+  }
+  .sidebar .marca-app .logo {
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--verde-claro), var(--verde));
+    display:grid; place-items:center; font-size:17px;
+  }
+  .sidebar .grupo-label { color:#5d6b64; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 8px; }
+  .sidebar nav a {
+    display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px;
+    color:#aab8b1; font-size:14px; font-weight:500; text-decoration:none; cursor:pointer;
+    transition:all .15s; margin-bottom:3px;
+  }
+  .sidebar nav a:hover { background:rgba(255,255,255,.06); color:#fff; }
+  .sidebar nav a.ativo { background:var(--verde); color:#fff; font-weight:600; }
+  .sidebar nav a .ic { font-size:17px; width:20px; text-align:center; }
+  .sidebar .user {
+    margin-top:auto; display:flex; align-items:center; gap:11px; padding:12px 10px;
+    border-top:1px solid rgba(255,255,255,.1); margin-top:18px;
+  }
+  .sidebar .user .av { width:36px; height:36px; border-radius:50%; background:var(--verde-claro); display:grid; place-items:center; color:#fff; font-weight:700; font-size:14px; }
+  .sidebar .user .nome { color:#fff; font-size:13.5px; font-weight:600; }
+  .sidebar .user .papel { color:#7d8d85; font-size:11.5px; }
+
+  .conteudo { padding:30px 38px; overflow-y:auto; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .topbar h1 { font-size:24px; font-weight:700; }
+  .topbar .migalha { font-size:13px; color:var(--cinza); margin-bottom:4px; }
+  .topbar .acoes { display:flex; gap:10px; }
+  .btn-sec {
+    padding:10px 16px; font-size:13.5px; font-weight:600; font-family:'DM Sans';
+    border:1.5px solid var(--linha); background:#fff; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; gap:7px; color:var(--tinta); transition:all .15s;
+  }
+  .btn-sec:hover { border-color:var(--verde); color:var(--verde); }
+  .btn-pri {
+    padding:10px 16px; font-size:13.5px; font-weight:600; font-family:'DM Sans';
+    border:none; background:var(--verde); color:#fff; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; gap:7px; transition:all .15s;
+  }
+  .btn-pri:hover { background:var(--verde-escuro); }
+
+  /* Filtros globais */
+  .filtros { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; }
+  .chip-filtro {
+    padding:8px 15px; font-size:13px; font-weight:600; border-radius:30px;
+    border:1.5px solid var(--linha); background:#fff; color:var(--cinza); cursor:pointer; transition:all .15s;
+  }
+  .chip-filtro.ativo { background:var(--verde); border-color:var(--verde); color:#fff; }
+  .chip-filtro:hover:not(.ativo) { border-color:var(--verde); color:var(--verde); }
+
+  /* KPIs */
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:26px; }
+  .kpi {
+    background:#fff; border-radius:var(--radius); padding:22px; box-shadow:var(--sombra);
+    border:1px solid var(--linha); position:relative; overflow:hidden;
+  }
+  .kpi::after { content:""; position:absolute; top:0; right:0; width:80px; height:80px; border-radius:50%; opacity:.07; }
+  .kpi .ic-kpi { width:42px; height:42px; border-radius:11px; display:grid; place-items:center; font-size:20px; margin-bottom:14px; }
+  .kpi .valor { font-family:'Sora'; font-size:30px; font-weight:700; line-height:1; }
+  .kpi .label { font-size:13px; color:var(--cinza); margin-top:6px; }
+  .kpi .delta { font-size:12px; font-weight:600; margin-top:9px; display:inline-flex; align-items:center; gap:4px; }
+  .kpi .delta.up { color:var(--verde-claro); }
+  .kpi .delta.down { color:var(--vermelho); }
+  .kpi.v1 .ic-kpi{background:rgba(18,167,103,.12);color:var(--verde);} .kpi.v1::after{background:var(--verde);}
+  .kpi.v2 .ic-kpi{background:rgba(45,125,210,.12);color:var(--azul);} .kpi.v2::after{background:var(--azul);}
+  .kpi.v3 .ic-kpi{background:rgba(245,166,35,.14);color:var(--amarelo);} .kpi.v3::after{background:var(--amarelo);}
+  .kpi.v4 .ic-kpi{background:rgba(224,82,77,.12);color:var(--vermelho);} .kpi.v4::after{background:var(--vermelho);}
+
+  /* Cards de gráfico */
+  .grid-graficos { display:grid; grid-template-columns:1.6fr 1fr; gap:18px; margin-bottom:18px; }
+  .card {
+    background:#fff; border-radius:var(--radius); padding:22px 24px; box-shadow:var(--sombra); border:1px solid var(--linha);
+  }
+  .card .cab { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+  .card .cab h3 { font-size:16px; font-weight:600; }
+  .card .cab .leg { font-size:12.5px; color:var(--cinza); margin-top:2px; }
+  .card .cab .badge { font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; background:var(--cinza-claro); color:var(--cinza); }
+
+  /* Gráfico de linha (SVG) */
+  .linha-svg { width:100%; height:180px; }
+  /* Gráfico de barras (horas pico) */
+  .barras { display:flex; align-items:flex-end; gap:8px; height:180px; padding-top:10px; }
+  .barras .barra { flex:1; background:linear-gradient(180deg, var(--verde-claro), var(--verde)); border-radius:6px 6px 0 0; position:relative; transition:all .3s; min-height:6px; }
+  .barras .barra:hover { filter:brightness(1.1); }
+  .barras .barra.pico { background:linear-gradient(180deg, var(--amarelo), #d4881a); }
+  .barras .barra span { position:absolute; bottom:-22px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--cinza); white-space:nowrap; }
+  .barras-wrap { padding-bottom:24px; }
+
+  /* Donut perfil */
+  .donut-wrap { display:flex; align-items:center; gap:24px; }
+  .legenda-donut { display:flex; flex-direction:column; gap:11px; }
+  .legenda-donut .item { display:flex; align-items:center; gap:9px; font-size:13px; }
+  .legenda-donut .pnt { width:11px; height:11px; border-radius:3px; }
+  .legenda-donut .item .pct { margin-left:auto; font-weight:600; color:var(--tinta); }
+
+  /* Tabela */
+  .tabela-card { background:#fff; border-radius:var(--radius); box-shadow:var(--sombra); border:1px solid var(--linha); overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    text-align:left; padding:14px 18px; font-size:12px; font-weight:600; letter-spacing:.5px; text-transform:uppercase;
+    color:var(--cinza); background:var(--cinza-claro); border-bottom:1px solid var(--linha);
+  }
+  tbody td { padding:14px 18px; font-size:14px; border-bottom:1px solid var(--linha); }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--bg); }
+  .pill { font-size:12px; font-weight:600; padding:4px 11px; border-radius:20px; display:inline-block; }
+  .pill.entrada { background:rgba(18,167,103,.13); color:var(--verde); }
+  .pill.saida { background:rgba(224,82,77,.12); color:var(--vermelho); }
+  .id-mono { font-family:'Sora'; font-size:13px; color:var(--cinza); }
+
+  .paginacao { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; font-size:13px; color:var(--cinza); }
+  .paginacao .nums { display:flex; gap:6px; }
+  .paginacao .nums button { width:32px; height:32px; border:1px solid var(--linha); background:#fff; border-radius:8px; cursor:pointer; font-size:13px; }
+  .paginacao .nums button.ativo { background:var(--verde); color:#fff; border-color:var(--verde); }
+
+  /* Importação */
+  .import-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:18px; }
+  .dropzone {
+    border:2px dashed var(--verde); border-radius:var(--radius); padding:48px 30px; text-align:center;
+    background:rgba(18,167,103,.04); cursor:pointer; transition:all .2s;
+  }
+  .dropzone:hover { background:rgba(18,167,103,.08); }
+  .dropzone .ic-up { width:64px; height:64px; border-radius:18px; background:rgba(18,167,103,.12); display:grid; place-items:center; font-size:30px; margin:0 auto 18px; }
+  .dropzone h3 { font-size:18px; font-weight:600; margin-bottom:6px; }
+  .dropzone p { font-size:13.5px; color:var(--cinza); margin-bottom:16px; }
+  .resumo-import { display:flex; flex-direction:column; gap:12px; }
+  .resumo-import .li-resumo { display:flex; align-items:center; gap:14px; padding:14px 16px; background:#fff; border:1px solid var(--linha); border-radius:11px; }
+  .resumo-import .li-resumo .nm { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:17px; font-weight:700; font-family:'Sora'; }
+  .resumo-import .li-resumo .tx { font-size:13.5px; color:var(--cinza); }
+  .resumo-import .li-resumo .tx b { display:block; font-size:20px; color:var(--tinta); font-family:'Sora'; }
+  .ok-nm { background:rgba(18,167,103,.13); color:var(--verde); }
+  .inv-nm { background:rgba(224,82,77,.12); color:var(--vermelho); }
+  .dup-nm { background:rgba(245,166,35,.14); color:var(--amarelo); }
+  .hist-import { margin-top:18px; }
+
+  .campo-detalhe { display:flex; flex-direction:column; gap:4px; padding:12px 0; border-bottom:1px solid var(--linha); }
+  .campo-detalhe .rotulo { font-size:12px; color:var(--cinza); font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+  .campo-detalhe .valor { font-size:14.5px; color:var(--tinta); }
+
+  .legenda-tela {    background:var(--tinta); color:#cdd8d2; font-size:12.5px; padding:10px 38px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .legenda-tela b { color:#fff; }
+
+  @media (max-width:880px){
+    .login-wrap{grid-template-columns:1fr;} .login-arte{display:none;}
+    .app{grid-template-columns:1fr;} .sidebar{display:none;}
+    .kpis{grid-template-columns:repeat(2,1fr);} .grid-graficos{grid-template-columns:1fr;}
+    .import-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-nav">
+  <div class="marca"><span class="logo">🎫</span> Sistema CAC</div>
+  <button class="ativo" onclick="ir('login', this)">1 · Login</button>
+  <button onclick="ir('dashboard', this)">2 · Dashboard</button>
+  <button onclick="ir('importacao', this)">3 · Importação</button>
+  <button onclick="ir('resultado', this)">4 · Resultado</button>
+  <button onclick="ir('consultas', this)">5 · Consultas</button>
+  <button onclick="ir('detalhe', this)">6 · Detalhe</button>
+  <button onclick="ir('relatorios', this)">7 · Relatórios</button>
+  <button onclick="ir('usuarios', this)">8 · Usuários</button>
+  <button onclick="ir('regras', this)">9 · Regras</button>
+  <span class="tag">Protótipo · Mês 1 · Grupo 1</span>
+</div>
+
+<!-- ===================== TELA 1: LOGIN ===================== -->
+<section id="login" class="tela visivel">
+  <div class="login-wrap">
+    <div class="login-arte">
+      <div class="topo">
+        <div class="logo-grande">🎫</div>
+        <h2>Controle de Acesso<br>do Campus</h2>
+        <p>Transformando os registros das catracas eletrônicas em informação estratégica para a gestão do IFBA.</p>
+        <div class="stats">
+          <div><div class="n">12.4k</div><div class="l">acessos / mês</div></div>
+          <div><div class="n">5</div><div class="l">pontos de acesso</div></div>
+          <div><div class="n">98%</div><div class="l">dados válidos</div></div>
+        </div>
+      </div>
+      <div class="rodape">IFBA · Campus Vitória da Conquista · Fase 2 — Desafio 1</div>
+    </div>
+    <div class="login-form">
+      <div class="selo">Acesso restrito</div>
+      <h3>Bem-vindo de volta</h3>
+      <p class="sub">Entre com suas credenciais para acessar o painel de gestão.</p>
+      <div class="campo">
+        <label>E-mail institucional</label>
+        <input type="email" placeholder="seu.nome@ifba.edu.br" value="gestor@ifba.edu.br">
+      </div>
+      <div class="campo">
+        <label>Senha</label>
+        <input type="password" placeholder="••••••••" value="senha123">
+      </div>
+      <div class="linha-aux">
+        <label><input type="checkbox" checked> Manter conectado</label>
+        <a href="#">Esqueci minha senha</a>
+      </div>
+      <button class="btn-principal" onclick="ir('dashboard')">Entrar no sistema →</button>
+      <div class="nota-rodape">Dois perfis disponíveis: Administrador e Gestor</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TELA 2: DASHBOARD ===================== -->
+<section id="dashboard" class="tela">
+  <div class="legenda-tela">📊 <b>Dashboard</b> — visão geral com indicadores e gráficos interativos (KPIs, evolução temporal, horários de pico e composição do fluxo)</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a class="ativo"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Dashboard</div>
+          <h1>Visão Geral do Campus</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-sec">📅 Maio 2026</button>
+          <button class="btn-pri">📄 Exportar</button>
+        </div>
+      </div>
+
+      <div class="filtros">
+        <div class="chip-filtro ativo">Últimos 7 dias</div>
+        <div class="chip-filtro">Últimos 30 dias</div>
+        <div class="chip-filtro">Mês atual</div>
+        <div class="chip-filtro">Personalizado</div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi v1"><div class="ic-kpi">🚪</div><div class="valor">12.428</div><div class="label">Total de acessos</div><div class="delta up">▲ 8,2% vs. anterior</div></div>
+        <div class="kpi v2"><div class="ic-kpi">📈</div><div class="valor">414</div><div class="label">Média diária</div><div class="delta up">▲ 3,1% vs. anterior</div></div>
+        <div class="kpi v3"><div class="ic-kpi">⏰</div><div class="valor">07h–08h</div><div class="label">Horário de pico</div><div class="delta">Mais movimentado</div></div>
+        <div class="kpi v4"><div class="ic-kpi">👤</div><div class="valor">1.847</div><div class="label">Pessoas únicas</div><div class="delta down">▼ 1,4% vs. anterior</div></div>
+      </div>
+
+      <div class="grid-graficos">
+        <div class="card">
+          <div class="cab">
+            <div><h3>Acessos ao longo do tempo</h3><div class="leg">Volume diário no período selecionado</div></div>
+            <span class="badge">Por dia</span>
+          </div>
+          <svg class="linha-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#12a767" stop-opacity="0.28"/>
+                <stop offset="100%" stop-color="#12a767" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="45" x2="600" y2="45" stroke="#eef2f0" stroke-width="1"/>
+            <line x1="0" y1="90" x2="600" y2="90" stroke="#eef2f0" stroke-width="1"/>
+            <line x1="0" y1="135" x2="600" y2="135" stroke="#eef2f0" stroke-width="1"/>
+            <path d="M0,130 L85,95 L170,108 L255,55 L340,72 L425,30 L510,60 L600,42 L600,180 L0,180 Z" fill="url(#grad)"/>
+            <path d="M0,130 L85,95 L170,108 L255,55 L340,72 L425,30 L510,60 L600,42" fill="none" stroke="#0a7d4d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="425" cy="30" r="4.5" fill="#0a7d4d" stroke="#fff" stroke-width="2"/>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cinza);margin-top:8px;">
+            <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cab">
+            <div><h3>Fluxo por perfil</h3><div class="leg">Composição dos acessos</div></div>
+          </div>
+          <div class="donut-wrap">
+            <svg width="130" height="130" viewBox="0 0 42 42">
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#eef2f0" stroke-width="6"/>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#0a7d4d" stroke-width="6" stroke-dasharray="52 48" stroke-dashoffset="25"/>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#2d7dd2" stroke-width="6" stroke-dasharray="28 72" stroke-dashoffset="-27"/>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#f5a623" stroke-width="6" stroke-dasharray="20 80" stroke-dashoffset="-55"/>
+              <text x="21" y="20" text-anchor="middle" font-size="7" font-weight="700" font-family="Sora" fill="#0d1b16">100%</text>
+              <text x="21" y="26" text-anchor="middle" font-size="3" fill="#5d6b64">do fluxo</text>
+            </svg>
+            <div class="legenda-donut">
+              <div class="item"><span class="pnt" style="background:#0a7d4d"></span> Estudantes <span class="pct">52%</span></div>
+              <div class="item"><span class="pnt" style="background:#2d7dd2"></span> Servidores <span class="pct">28%</span></div>
+              <div class="item"><span class="pnt" style="background:#f5a623"></span> Visitantes <span class="pct">20%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card barras-wrap">
+        <div class="cab">
+          <div><h3>Horários de maior fluxo</h3><div class="leg">Distribuição de acessos por hora do dia</div></div>
+          <span class="badge">Pico às 07h</span>
+        </div>
+        <div class="barras">
+          <div class="barra" style="height:18%"><span>6h</span></div>
+          <div class="barra pico" style="height:95%"><span>7h</span></div>
+          <div class="barra" style="height:72%"><span>8h</span></div>
+          <div class="barra" style="height:40%"><span>9h</span></div>
+          <div class="barra" style="height:35%"><span>10h</span></div>
+          <div class="barra" style="height:48%"><span>11h</span></div>
+          <div class="barra" style="height:68%"><span>12h</span></div>
+          <div class="barra" style="height:55%"><span>13h</span></div>
+          <div class="barra" style="height:30%"><span>14h</span></div>
+          <div class="barra" style="height:38%"><span>15h</span></div>
+          <div class="barra" style="height:52%"><span>16h</span></div>
+          <div class="barra" style="height:78%"><span>17h</span></div>
+          <div class="barra" style="height:60%"><span>18h</span></div>
+          <div class="barra" style="height:25%"><span>19h</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA 3: IMPORTAÇÃO ===================== -->
+<section id="importacao" class="tela">
+  <div class="legenda-tela">📥 <b>Importação de CSV</b> — upload, validação de formato, tratamento de inconsistências e feedback com totais</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a class="ativo"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Importação</div>
+          <h1>Importar dados da catraca</h1>
+        </div>
+      </div>
+
+      <div class="import-grid">
+        <div>
+          <div class="dropzone">
+            <div class="ic-up">📄</div>
+            <h3>Arraste o arquivo CSV aqui</h3>
+            <p>ou clique para selecionar · máximo 50 MB · apenas .csv</p>
+            <button class="btn-pri" style="margin:0 auto;" onclick="ir('resultado')">Selecionar arquivo</button>
+          </div>
+          <div class="card" style="margin-top:18px;">
+            <div class="cab"><div><h3>Resultado da última importação</h3><div class="leg">acessos_maio_2026.csv · há 5 minutos</div></div></div>
+            <div class="resumo-import" style="flex-direction:row;">
+              <div class="li-resumo" style="flex:1"><div class="nm ok-nm">✓</div><div class="tx"><b>4.812</b> válidos</div></div>
+              <div class="li-resumo" style="flex:1"><div class="nm inv-nm">!</div><div class="tx"><b>37</b> inválidos</div></div>
+              <div class="li-resumo" style="flex:1"><div class="nm dup-nm">⊘</div><div class="tx"><b>15</b> duplicados</div></div>
+            </div>
+            <button class="btn-sec" style="margin-top:16px;">⬇ Baixar relatório de erros</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cab"><div><h3>Histórico de importações</h3><div class="leg">Últimos envios</div></div></div>
+          <div class="resumo-import">
+            <div class="li-resumo"><div class="nm ok-nm">✓</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">acessos_maio_2026.csv</div><div class="tx" style="font-size:12px">4.812 registros · 28/05</div></div></div>
+            <div class="li-resumo"><div class="nm ok-nm">✓</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">acessos_abril_2026.csv</div><div class="tx" style="font-size:12px">4.521 registros · 02/05</div></div></div>
+            <div class="li-resumo"><div class="nm dup-nm">⊘</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">teste_parcial.csv</div><div class="tx" style="font-size:12px">120 registros · 28/04</div></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA 4: CONSULTAS ===================== -->
+<section id="consultas" class="tela">
+  <div class="legenda-tela">🔍 <b>Consultas e Filtros</b> — busca por identificador, intervalo de datas, ponto e tipo de acesso, com paginação</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a class="ativo"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Consultas</div>
+          <h1>Registros de Acesso</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-sec">🧹 Limpar filtros</button>
+          <button class="btn-pri">📄 Exportar Excel</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px; padding:18px 22px;">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+          <div class="campo" style="margin:0;"><label>Identificador</label><input style="padding:10px 13px;" placeholder="Ex: A1B2C3..."></div>
+          <div class="campo" style="margin:0;"><label>Data início</label><input style="padding:10px 13px;" type="date" value="2026-05-01"></div>
+          <div class="campo" style="margin:0;"><label>Data fim</label><input style="padding:10px 13px;" type="date" value="2026-05-28"></div>
+          <div class="campo" style="margin:0;"><label>Tipo de acesso</label><input style="padding:10px 13px;" placeholder="Todos" value="Todos"></div>
+        </div>
+      </div>
+
+      <div class="tabela-card">
+        <table>
+          <thead>
+            <tr><th>Data e hora</th><th>Identificador</th><th>Equipamento</th><th>Grupo</th><th>Direção</th></tr>
+          </thead>
+          <tbody>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>02/06/2026 20:50:53</td><td class="id-mono">a3f8c2e1b9d4...</td><td>FACIAL CAT 1 ENTRADA</td><td>PORTARIA</td><td><span class="pill entrada">Entrada</span></td></tr>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>02/06/2026 10:38:08</td><td class="id-mono">7b1e9f4a2c8d...</td><td>FACIAL REFEITORIO</td><td>REFEITORIO</td><td><span class="pill entrada">Entrada</span></td></tr>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>29/05/2026 16:23:16</td><td class="id-mono">e2d6b8c1a5f9...</td><td>CATRACA REFEITORIO</td><td>REFEITORIO</td><td><span class="pill entrada">Entrada</span></td></tr>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>28/05/2026 18:02:14</td><td class="id-mono">c9a4f2e7b3d1...</td><td>FACIAL CAT 1 ENTRADA</td><td>PORTARIA</td><td><span class="pill entrada">Entrada</span></td></tr>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>27/05/2026 09:28:51</td><td class="id-mono">f1b7d3e8a2c6...</td><td>FACIAL CAT 2 ENTRADA</td><td>PORTARIA</td><td><span class="pill entrada">Entrada</span></td></tr>
+            <tr onclick="ir('detalhe')" style="cursor:pointer;"><td>26/05/2026 02:14:09</td><td class="id-mono">b4e9c1f6a8d2...</td><td>FACIAL CAT 1 ENTRADA</td><td>PORTARIA</td><td><span class="pill saida" style="background:rgba(245,166,35,.14);color:var(--amarelo);">⚠ Atípico</span></td></tr>
+          </tbody>
+        </table>
+        <div class="paginacao">
+          <span>Exibindo 1–6 de 4.812 registros · clique numa linha para ver o detalhe</span>
+          <div class="nums">
+            <button>←</button>
+            <button class="ativo">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>…</button>
+            <button>97</button>
+            <button>→</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA: RESULTADO DA IMPORTAÇÃO ===================== -->
+<section id="resultado" class="tela">
+  <div class="legenda-tela">✅ <b>Resultado da Importação</b> — resumo com totais de registros importados, duplicados e linhas com erro, mais o log de erros</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a class="ativo" onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Importação / Resultado</div>
+          <h1>Importação concluída</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-sec" onclick="ir('importacao')">↩ Nova importação</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="cab"><div><h3>Arquivo processado</h3><div class="leg">Dados_Catraca_1.xlsx · há instantes</div></div><span class="badge">Concluído</span></div>
+        <div class="resumo-import" style="flex-direction:row;">
+          <div class="li-resumo" style="flex:1"><div class="nm ok-nm">✓</div><div class="tx"><b>912</b> importados</div></div>
+          <div class="li-resumo" style="flex:1"><div class="nm dup-nm">⊘</div><div class="tx"><b>54</b> duplicados</div></div>
+          <div class="li-resumo" style="flex:1"><div class="nm inv-nm">!</div><div class="tx"><b>33</b> com erro</div></div>
+        </div>
+      </div>
+
+      <div class="tabela-card">
+        <table>
+          <thead>
+            <tr><th>Linha</th><th>Motivo do erro</th><th>Dados da linha</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>47</td><td><span class="pill saida">credencial vazia</span></td><td class="id-mono">,Maria Silva,02/06/2026 08:14:00,...</td></tr>
+            <tr><td>112</td><td><span class="pill saida">data inválida</span></td><td class="id-mono">69581234,João Souza,data-ruim,...</td></tr>
+            <tr><td>205</td><td><span class="pill saida">data vazia</span></td><td class="id-mono">10405359,Ana Costa,,PORTARIA,...</td></tr>
+            <tr><td>318</td><td><span class="pill saida">credencial vazia</span></td><td class="id-mono">,Pedro Lima,01/06/2026 17:30:00,...</td></tr>
+          </tbody>
+        </table>
+        <div class="paginacao">
+          <span>Exibindo 4 de 33 erros</span>
+          <button class="btn-sec">⬇ Baixar log completo de erros</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA: DETALHE DO ACESSO ===================== -->
+<section id="detalhe" class="tela">
+  <div class="legenda-tela">🔎 <b>Detalhe do Acesso</b> — todos os campos de um registro individual vindos da catraca</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a class="ativo" onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Consultas / Detalhe do acesso</div>
+          <h1>Registro #4827</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-sec" onclick="ir('consultas')">← Voltar à listagem</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cab"><div><h3>Dados do evento</h3><div class="leg">Importado de Dados_Catraca_1.xlsx</div></div><span class="pill entrada">Entrada</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px;">
+          <div class="campo-detalhe"><span class="rotulo">Identificador pseudonimizado</span><span class="valor id-mono">a3f8c2e1b9d4...7f21</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Data e hora do evento</span><span class="valor">02/06/2026 20:50:53</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Grupo de equipamento</span><span class="valor">PORTARIA</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Equipamento</span><span class="valor">FACIAL CAT 1 ENTRADA</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Área de origem</span><span class="valor">EXTERNA</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Área de destino</span><span class="valor">INTERNA</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Direção do evento</span><span class="valor">Entrada</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Evento</span><span class="valor">Acesso Concluído em Batch</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Tipo de consulta</span><span class="valor">—</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Foto</span><span class="valor">Ver Imagem</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="cab"><div><h3>Dados da pessoa</h3><div class="leg">⚠️ Acesso restrito · visível apenas para administradores</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px;">
+          <div class="campo-detalhe"><span class="rotulo">Número da credencial</span><span class="valor id-mono">69591795</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Nome</span><span class="valor">Giovanna Perovano e Silva</span></div>
+          <div class="campo-detalhe"><span class="rotulo">Estrutura organizacional</span><span class="valor">Instituto Federal da Bahia</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA: RELATÓRIOS ===================== -->
+<section id="relatorios" class="tela">
+  <div class="legenda-tela">📄 <b>Relatórios</b> — configuração de filtros e exportação em PDF e Excel</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a class="ativo" onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Relatórios</div>
+          <h1>Gerar relatório</h1>
+        </div>
+      </div>
+
+      <div class="import-grid">
+        <div class="card">
+          <div class="cab"><div><h3>Configurar relatório</h3><div class="leg">Defina o período e os filtros</div></div></div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:6px;">
+            <div class="campo" style="margin:0;"><label>Período</label><input type="text" style="padding:11px 13px;" value="01/06/2026 a 07/06/2026"></div>
+            <div class="campo" style="margin:0;"><label>Grupo de equipamento</label><input type="text" style="padding:11px 13px;" value="Todos"></div>
+            <div class="campo" style="margin:0;"><label>Estrutura organizacional</label><input type="text" style="padding:11px 13px;" value="Todas"></div>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+              <button class="btn-pri" style="flex:1;justify-content:center;">📄 Baixar PDF</button>
+              <button class="btn-sec" style="flex:1;justify-content:center;">📊 Baixar Excel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cab"><div><h3>Relatórios gerados</h3><div class="leg">Últimas exportações</div></div></div>
+          <div class="resumo-import">
+            <div class="li-resumo"><div class="nm ok-nm">📄</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">Acessos_semana_01-06.pdf</div><div class="tx" style="font-size:12px">Gerado há 2 horas</div></div><button class="btn-sec" style="padding:6px 12px;">⬇</button></div>
+            <div class="li-resumo"><div class="nm ok-nm">📊</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">Acessos_maio.xlsx</div><div class="tx" style="font-size:12px">Gerado ontem</div></div><button class="btn-sec" style="padding:6px 12px;">⬇</button></div>
+            <div class="li-resumo"><div class="nm ok-nm">📄</div><div style="flex:1"><div style="font-weight:600;font-size:13.5px">Portaria_maio.pdf</div><div class="tx" style="font-size:12px">Gerado há 3 dias</div></div><button class="btn-sec" style="padding:6px 12px;">⬇</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA: GERENCIAR USUÁRIOS ===================== -->
+<section id="usuarios" class="tela">
+  <div class="legenda-tela">👥 <b>Gerenciar Usuários</b> — criar e desativar usuários do sistema, restrito a administradores</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a class="ativo" onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Administração / Usuários</div>
+          <h1>Usuários do sistema</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-pri">+ Novo usuário</button>
+        </div>
+      </div>
+
+      <div class="tabela-card">
+        <table>
+          <thead>
+            <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Ações</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Ricardo A. Lima</td><td>ricardo@ifba.edu.br</td><td><span class="pill entrada">Administrador</span></td><td>Ativo</td><td><button class="btn-sec" style="padding:6px 12px;">Editar</button></td></tr>
+            <tr><td>Marco Antônio Souza</td><td>marco@ifba.edu.br</td><td><span class="pill" style="background:var(--cinza-claro);color:var(--cinza);">Gestor</span></td><td>Ativo</td><td><button class="btn-sec" style="padding:6px 12px;">Desativar</button></td></tr>
+            <tr><td>Eduarda Santos</td><td>eduarda@ifba.edu.br</td><td><span class="pill" style="background:var(--cinza-claro);color:var(--cinza);">Gestor</span></td><td>Ativo</td><td><button class="btn-sec" style="padding:6px 12px;">Desativar</button></td></tr>
+            <tr><td>Gabriel Lima</td><td>gabriel@ifba.edu.br</td><td><span class="pill" style="background:var(--cinza-claro);color:var(--cinza);">Gestor</span></td><td style="color:var(--vermelho);">Inativo</td><td><button class="btn-sec" style="padding:6px 12px;">Reativar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="cab"><div><h3>Novo usuário</h3><div class="leg">Preencha os dados para criar um acesso</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;">
+          <div class="campo" style="margin:0;"><label>Nome completo</label><input style="padding:11px 13px;" placeholder="Nome do usuário"></div>
+          <div class="campo" style="margin:0;"><label>E-mail institucional</label><input style="padding:11px 13px;" placeholder="nome@ifba.edu.br"></div>
+          <div class="campo" style="margin:0;"><label>Senha</label><input type="password" style="padding:11px 13px;" placeholder="Mínimo 8 caracteres"></div>
+          <div class="campo" style="margin:0;"><label>Perfil</label><input style="padding:11px 13px;" value="Gestor"></div>
+        </div>
+        <button class="btn-pri" style="margin-top:16px;">Criar usuário</button>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===================== TELA: REGRAS DE HORÁRIO ===================== -->
+<section id="regras" class="tela">
+  <div class="legenda-tela">⏰ <b>Regras de Horário</b> — define o horário de funcionamento por grupo de equipamento, base para detectar acessos atípicos</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca-app"><span class="logo">🎫</span> Sistema CAC</div>
+      <div class="grupo-label">Principal</div>
+      <nav>
+        <a onclick="ir('dashboard')"><span class="ic">📊</span> Dashboard</a>
+        <a onclick="ir('consultas')"><span class="ic">🔍</span> Consultas</a>
+        <a onclick="ir('importacao')"><span class="ic">📥</span> Importação</a>
+        <a onclick="ir('relatorios')"><span class="ic">📄</span> Relatórios</a>
+      </nav>
+      <div class="grupo-label">Administração</div>
+      <nav>
+        <a onclick="ir('usuarios')"><span class="ic">👥</span> Usuários</a>
+        <a class="ativo" onclick="ir('regras')"><span class="ic">⏰</span> Regras de Horário</a>
+      </nav>
+      <div class="user">
+        <div class="av">R</div>
+        <div><div class="nome">Ricardo A. Lima</div><div class="papel">Administrador</div></div>
+      </div>
+    </aside>
+    <main class="conteudo">
+      <div class="topbar">
+        <div>
+          <div class="migalha">Início / Administração / Regras de Horário</div>
+          <h1>Regras de funcionamento</h1>
+        </div>
+        <div class="acoes">
+          <button class="btn-pri">+ Nova regra</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;background:rgba(245,166,35,.08);border-color:var(--amarelo);">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-size:22px;">💡</span>
+          <span style="font-size:13.5px;color:var(--tinta);">Acessos registrados fora dos horários definidos abaixo são sinalizados automaticamente como <b>atípicos</b> no dashboard e nos alertas.</span>
+        </div>
+      </div>
+
+      <div class="tabela-card">
+        <table>
+          <thead>
+            <tr><th>Grupo de equipamento</th><th>Dia da semana</th><th>Abertura</th><th>Fechamento</th><th>Ações</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PORTARIA</td><td>Segunda a Sexta</td><td>06:00</td><td>22:00</td><td><button class="btn-sec" style="padding:6px 12px;">Editar</button></td></tr>
+            <tr><td>PORTARIA</td><td>Sábado</td><td>07:00</td><td>14:00</td><td><button class="btn-sec" style="padding:6px 12px;">Editar</button></td></tr>
+            <tr><td>REFEITORIO</td><td>Segunda a Sexta</td><td>11:00</td><td>14:00</td><td><button class="btn-sec" style="padding:6px 12px;">Editar</button></td></tr>
+            <tr><td>REFEITORIO</td><td>Segunda a Sexta</td><td>18:00</td><td>20:00</td><td><button class="btn-sec" style="padding:6px 12px;">Editar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  function ir(id, btn){
+    document.querySelectorAll('.tela').forEach(t=>t.classList.remove('visivel'));
+    document.getElementById(id).classList.add('visivel');
+    document.querySelectorAll('.proto-nav button').forEach(b=>b.classList.remove('ativo'));
+    if(btn){
+      btn.classList.add('ativo');
+    } else {
+      // destaca o botão da nav correspondente ao id da tela
+      document.querySelectorAll('.proto-nav button').forEach(b=>{
+        if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+id+"'") !== -1){
+          b.classList.add('ativo');
+        }
+      });
+    }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
