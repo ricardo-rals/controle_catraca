@@ -1,0 +1,29 @@
+<h1>Importação de CSV</h1>
+
+<form
+    method="POST"
+    enctype="multipart/form-data"
+>
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Importar
+    </button>
+
+</form>
+
+<!-- versão com bootstrap
+    {% if messages %}
+
+    {% for message in messages %}
+
+       <div class="alert alert-info">
+            {{ message }}
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+-->
