@@ -1,5 +1,4 @@
-
-from django.db import transaction 
+from django.db import transaction
 import logging
 
 from apps.acessos.models import PontoAcesso, RegistroAcesso
@@ -37,7 +36,9 @@ class ImportacaoService:
                 )
 
                 self.importacao.total_registros = total_linhas
-                self.importacao.status = self.importacao.STATUS_CHOICES[0][0]  # 'SUCESSO'
+                self.importacao.status = self.importacao.STATUS_CHOICES[0][
+                    0
+                ]  # 'SUCESSO'
                 self.importacao.motivo_erro = ""
                 self.importacao.save(
                     update_fields=["total_registros", "status", "motivo_erro"]
@@ -85,7 +86,9 @@ class ImportacaoService:
 
             registros.append(
                 RegistroAcesso(
-                    identificador_pseudonimizado=criptografar_valor(identificador_em_claro),
+                    identificador_pseudonimizado=criptografar_valor(
+                        identificador_em_claro
+                    ),
                     ponto_acesso=ponto_acesso,
                     tipo_acesso=dado.get("status", ""),
                     timestamp=dado.get("horario_entrada") or dado.get("horario_saida"),
