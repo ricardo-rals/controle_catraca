@@ -42,9 +42,7 @@ def desativar_usuario(request, usuario_id):
 
     usuario.save()
 
-    return redirect("listar_usuarios")  # Create your views here.
-
-
+    return redirect("listar_usuarios")
 
 
 @login_required
