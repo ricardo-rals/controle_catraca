@@ -1,5 +1,11 @@
-from django.urls import path
+from django import forms
 
-from .views import importar_csv
 
-urlpatterns = [path("",importar_csv,name="importar_csv")]
+class UploadCSVForm(forms.Form):
+    """
+    Formulário simples para receber um arquivo CSV.
+    """
+
+    arquivo = forms.FileField(
+        label="Selecione um arquivo CSV"
+    )
