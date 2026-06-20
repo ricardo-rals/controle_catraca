@@ -29,21 +29,18 @@ def importar_csv(request):
             # valida se realmente é csv
             if not arquivo.name.endswith(".csv"):
 
-                messages.error(
-                    request,
-                    "Envie apenas arquivos CSV."
-                )
+                messages.error(request, "Envie apenas arquivos CSV.")
 
                 return redirect("importar_csv")
 
             # registra a tentativa de importação
             Importacao.objects.create(nome_arquivo=arquivo.name)
 
-            messages.success(request,"Arquivo recebido com sucesso.")
+            messages.success(request, "Arquivo recebido com sucesso.")
 
             return redirect("importar_csv")
 
     else:
         form = UploadCSVForm()
 
-    return render(request, "importacoes/importar_csv.html",{"form": form})
+    return render(request, "importacoes/importar_csv.html", {"form": form})

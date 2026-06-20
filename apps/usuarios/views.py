@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from .models import UsuarioSistema
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 
+
 def listar_usuarios(request):
     usuarios = UsuarioSistema.objects.all()
-    return render( request, "usuarios/listar_usuarios.html", {"usuarios": usuarios})
+    return render(request, "usuarios/listar_usuarios.html", {"usuarios": usuarios})
 
 
 def criar_usuario(request):
@@ -29,8 +30,7 @@ def criar_usuario(request):
 
         form = UsuarioSistemaForm()
 
-    return render( request, "usuarios/criar_usuario.html",{"form": form})
-
+    return render(request, "usuarios/criar_usuario.html", {"form": form})
 
 
 def desativar_usuario(request, usuario_id):
@@ -41,4 +41,4 @@ def desativar_usuario(request, usuario_id):
 
     usuario.save()
 
-    return redirect("listar_usuarios")# Create your views here.
+    return redirect("listar_usuarios")  # Create your views here.
