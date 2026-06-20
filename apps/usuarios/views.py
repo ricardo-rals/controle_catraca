@@ -3,6 +3,7 @@ from .models import UsuarioSistema
 from django.shortcuts import redirect
 from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 
 
 def listar_usuarios(request):
@@ -42,3 +43,10 @@ def desativar_usuario(request, usuario_id):
     usuario.save()
 
     return redirect("listar_usuarios")  # Create your views here.
+
+
+
+
+@login_required
+def dashboard(request):
+    return render(request, "dashboard.html")
