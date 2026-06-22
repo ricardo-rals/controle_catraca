@@ -58,4 +58,5 @@ Thumbs.db
 .ruff_cache/
 
 *sprint1.md
-csv/
+./csv/*
+csv

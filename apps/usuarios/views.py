@@ -48,3 +48,8 @@ def desativar_usuario(request, usuario_id):
 @login_required
 def dashboard(request):
     return render(request, "dashboard.html")
+
+
+@login_required
+def upload_arquivo(request):
+    pass  # ... código existente da view ...

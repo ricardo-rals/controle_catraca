@@ -1,0 +1,17 @@
+/* ... CSS já existente ... */
+
+/* Estilos adicionados na HU-015 */
+.navbar-topo {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 28px; background:var(--tinta); color:#fff;
+}
+.navbar-marca { font-family:'Sora'; font-weight:700; font-size:16px; }
+.navbar-usuario { display:flex; align-items:center; gap:14px; }
+.nome-usuario { font-weight:600; font-size:14px; }
+.perfil-usuario { font-size:12px; color:rgba(255,255,255,.6); }
+.form-logout { margin:0; }
+.btn-sair {
+  background:rgba(255,255,255,.12); color:#fff; border:none;
+  padding:7px 16px; border-radius:8px; cursor:pointer; font-size:13px;
+}
+.btn-sair:hover { background:var(--verde); }

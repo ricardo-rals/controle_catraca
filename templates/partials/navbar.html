@@ -1,0 +1,16 @@
+<nav class="navbar-topo">
+  <div class="navbar-marca">
+    <span class="logo">🎫</span> Sistema CAC
+  </div>
+
+  {% if user.is_authenticated %}
+    <div class="navbar-usuario">
+      <span class="nome-usuario">{{ user.get_full_name|default:user.username }}</span>
+      <span class="perfil-usuario">{{ user.get_perfil_display }}</span>
+      <form method="post" action="{% url 'logout' %}" class="form-logout">
+        {% csrf_token %}
+        <button type="submit" class="btn-sair">Sair</button>
+      </form>
+    </div>
+  {% endif %}
+</nav>
