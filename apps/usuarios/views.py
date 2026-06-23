@@ -6,11 +6,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 
+@login_required
 def listar_usuarios(request):
     usuarios = UsuarioSistema.objects.all()
     return render(request, "usuarios/listar_usuarios.html", {"usuarios": usuarios})
 
 
+@login_required
 def criar_usuario(request):
 
     if request.method == "POST":
@@ -34,6 +36,7 @@ def criar_usuario(request):
     return render(request, "usuarios/criar_usuario.html", {"form": form})
 
 
+@login_required
 def desativar_usuario(request, usuario_id):
 
     usuario = get_object_or_404(UsuarioSistema, id=usuario_id)

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block titulo %}Novo usuário{% endblock %}
+
+{% block content %}
+<h1>Novo usuário</h1>
+
+{% if form.non_field_errors %}
+  <div class="error">
+    {% for erro in form.non_field_errors %}
+      <p>{{ erro }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Criar usuário</button>
+</form>
+
+<a href="{% url 'listar_usuarios' %}">Voltar à listagem</a>
+{% endblock %}
