@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+/* ====================================================
+   VARIÁVEIS GLOBAIS
+   ==================================================== */
+:root {
+  --verde: #0a7d4d;
+  --verde-claro: #12a767;
+  --verde-escuro: #065c38;
+  --tinta: #0d1b16;
+  --cinza: #5d6b64;
+  --cinza-claro: #eef2f0;
+  --linha: #dde5e1;
+  --branco: #ffffff;
+  --bg: #f5f8f6;
+  --amarelo: #f5a623;
+  --vermelho: #e0524d;
+  --azul: #2d7dd2;
+  --sombra: 0 1px 3px rgba(13,27,22,.08), 0 8px 24px rgba(13,27,22,.06);
+  --radius: 14px;
+}
+
+/* ====================================================
+   RESET E BASE
+   ==================================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--tinta);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-family: 'Sora', sans-serif; }
+
+/* ====================================================
+   SHELL DO APP (sidebar + conteúdo)
+   ==================================================== */
+.app {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100vh;
+}
+
+/* ====================================================
+   SIDEBAR
+   ==================================================== */
+.sidebar {
+  background: var(--tinta);
+  padding: 26px 18px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar .marca-app {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 8px;
+  margin-bottom: 30px;
+  color: #fff;
+  font-family: 'Sora';
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.sidebar .marca-app .logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--verde-claro), var(--verde));
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.sidebar .grupo-label {
+  color: #5d6b64;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 10px;
+  margin: 14px 0 8px;
+}
+
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  color: #aab8b1;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all .15s;
+  margin-bottom: 3px;
+}
+
+.sidebar nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.sidebar nav a.ativo { background: var(--verde); color: #fff; font-weight: 600; }
+
+.sidebar nav a.desabilitado {
+  opacity: .38;
+  pointer-events: none;
+  cursor: default;
+}
+
+.sidebar nav a .ic { font-size: 17px; width: 20px; text-align: center; }
+
+.sidebar .user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.sidebar .user .av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.sidebar .user .nome { color: #fff; font-size: 13.5px; font-weight: 600; }
+.sidebar .user .papel { color: #7d8d85; font-size: 11.5px; }
+
+.sidebar .user .info { flex: 1; min-width: 0; }
+
+.sidebar .form-logout { margin: 0; }
+
+.sidebar .btn-logout {
+  margin-top: 5px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.55);
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  cursor: pointer;
+  font-family: 'DM Sans';
+  transition: all .15s;
+}
+
+.sidebar .btn-logout:hover { background: rgba(255,255,255,.08); color: #fff; }
+
+/* ====================================================
+   ÁREA DE CONTEÚDO
+   ==================================================== */
+.conteudo { padding: 30px 38px; }
+
+/* ====================================================
+   TOPBAR
+   ==================================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.topbar h1 { font-size: 24px; font-weight: 700; }
+.topbar .migalha { font-size: 13px; color: var(--cinza); margin-bottom: 4px; }
+.topbar .acoes { display: flex; gap: 10px; align-items: center; }
+
+/* ====================================================
+   BOTÕES
+   ==================================================== */
+.btn-sec {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: 'DM Sans';
+  border: 1.5px solid var(--linha);
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--tinta);
+  transition: all .15s;
+  text-decoration: none;
+}
+
+.btn-sec:hover { border-color: var(--verde); color: var(--verde); }
+
+.btn-pri {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: 'DM Sans';
+  border: none;
+  background: var(--verde);
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all .15s;
+  text-decoration: none;
+}
+
+.btn-pri:hover { background: var(--verde-escuro); }
+
+/* ====================================================
+   CARDS
+   ==================================================== */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--sombra);
+  border: 1px solid var(--linha);
+}
+
+.card .cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.card .cab h3 { font-size: 16px; font-weight: 600; }
+.card .cab .leg { font-size: 12.5px; color: var(--cinza); margin-top: 2px; }
+
+.card .cab .badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--cinza-claro);
+  color: var(--cinza);
+  white-space: nowrap;
+}
+
+/* ====================================================
+   TABELAS
+   ==================================================== */
+.tabela-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  border: 1px solid var(--linha);
+  overflow: hidden;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+thead th {
+  text-align: left;
+  padding: 14px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--cinza);
+  background: var(--cinza-claro);
+  border-bottom: 1px solid var(--linha);
+}
+
+tbody td {
+  padding: 14px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--linha);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg); }
+
+.pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.pill.entrada  { background: rgba(18,167,103,.13); color: var(--verde); }
+.pill.saida    { background: rgba(224,82,77,.12);  color: var(--vermelho); }
+.pill.admin    { background: rgba(18,167,103,.13); color: var(--verde); }
+.pill.gestor   { background: var(--cinza-claro);   color: var(--cinza); }
+.pill.atipico  { background: rgba(245,166,35,.14); color: var(--amarelo); }
+
+.id-mono { font-family: 'Sora'; font-size: 13px; color: var(--cinza); }
+
+/* ====================================================
+   PAGINAÇÃO
+   ==================================================== */
+.paginacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  font-size: 13px;
+  color: var(--cinza);
+}
+
+.paginacao .nums { display: flex; gap: 6px; }
+
+.paginacao .nums button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--linha);
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'DM Sans';
+}
+
+.paginacao .nums button.ativo {
+  background: var(--verde);
+  color: #fff;
+  border-color: var(--verde);
+}
+
+/* ====================================================
+   FORMULÁRIOS
+   ==================================================== */
+.campo { margin-bottom: 20px; }
+
+.campo label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 7px;
+  color: var(--tinta);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 13px 15px;
+  font-size: 14.5px;
+  font-family: 'DM Sans';
+  border: 1.5px solid var(--linha);
+  border-radius: 11px;
+  background: var(--bg);
+  transition: all .18s;
+  color: var(--tinta);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--verde);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(10,125,77,.1);
+}
+
+/* ====================================================
+   MENSAGENS DJANGO
+   ==================================================== */
+.messages-wrapper { margin-bottom: 20px; }
+
+.alerta {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alerta-success  { background: rgba(18,167,103,.1);  color: #085c30; border: 1px solid rgba(18,167,103,.25); }
+.alerta-error    { background: rgba(224,82,77,.09);  color: #8b1a1a; border: 1px solid rgba(224,82,77,.25); }
+.alerta-warning  { background: rgba(245,166,35,.11); color: #7a4d00; border: 1px solid rgba(245,166,35,.3); }
+.alerta-info     { background: rgba(45,125,210,.09); color: #1a4475; border: 1px solid rgba(45,125,210,.2); }
+
+.erros-form {
+  background: rgba(224,82,77,.07);
+  border: 1px solid rgba(224,82,77,.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13.5px;
+  color: #8b1a1a;
+}
+
+.erros-form p { margin: 0; }
+
+.erros-form ul {
+  margin: 4px 0 0 16px;
+  font-size: 13px;
+}
+
+/* ====================================================
+   RESPONSIVO
+   ==================================================== */
+@media (max-width: 880px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .conteudo { padding: 20px 16px; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .topbar .acoes { width: 100%; }
+}

@@ -10,4 +10,9 @@ urlpatterns = [
         views.desativar_usuario,
         name="desativar_usuario",
     ),
+    path(
+        "usuarios/<int:usuario_id>/reativar/",
+        views.reativar_usuario,
+        name="reativar_usuario",
+    ),
 ]

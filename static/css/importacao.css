@@ -1,0 +1,123 @@
+/* ====================================================
+   IMPORTAÇÃO DE CSV — dropzone, histórico, resumo
+   ==================================================== */
+
+.import-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+}
+
+/* Dropzone de upload */
+.dropzone {
+  display: block;
+  border: 2px dashed var(--verde);
+  border-radius: var(--radius);
+  padding: 48px 30px;
+  text-align: center;
+  background: rgba(18,167,103,.04);
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.dropzone:hover { background: rgba(18,167,103,.08); }
+
+.dropzone .ic-up {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(18,167,103,.12);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  margin: 0 auto 18px;
+}
+
+.dropzone h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.dropzone p  { font-size: 13.5px; color: var(--cinza); margin-bottom: 16px; }
+
+/* Botão de upload dentro da dropzone */
+.dropzone .btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Sans';
+  border: none;
+  background: var(--verde);
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.dropzone .btn-upload:hover { background: var(--verde-escuro); }
+
+/* Input file oculto (associado ao botão via label ou JS) */
+.dropzone input[type="file"] { display: none; }
+
+/* Cards de resumo */
+.resumo-import { display: flex; flex-direction: column; gap: 12px; }
+
+.resumo-import.resumo-row {
+  flex-direction: row;
+}
+
+.resumo-import .li-resumo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--linha);
+  border-radius: 11px;
+}
+
+.resumo-import .li-resumo .nm {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Sora';
+  flex-shrink: 0;
+}
+
+.resumo-import .li-resumo .tx { font-size: 13.5px; color: var(--cinza); }
+.resumo-import .li-resumo .tx b {
+  display: block;
+  font-size: 20px;
+  color: var(--tinta);
+  font-family: 'Sora';
+}
+
+.ok-nm  { background: rgba(18,167,103,.13); color: var(--verde); }
+.inv-nm { background: rgba(224,82,77,.12);  color: var(--vermelho); }
+.dup-nm { background: rgba(245,166,35,.14); color: var(--amarelo); }
+
+/* Histórico de importações */
+.hist-nome { font-weight: 600; font-size: 13.5px; }
+.hist-meta { font-size: 12px; color: var(--cinza); margin-top: 2px; }
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.status-sucesso     { background: rgba(18,167,103,.13); color: var(--verde); }
+.status-falha       { background: rgba(224,82,77,.12);  color: var(--vermelho); }
+.status-processando { background: rgba(245,166,35,.12); color: #7a4d00; }
+
+@media (max-width: 880px) {
+  .import-grid { grid-template-columns: 1fr; }
+  .resumo-import.resumo-row { flex-direction: column; }
+}

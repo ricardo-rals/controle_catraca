@@ -1,47 +1,127 @@
-{% extends "base.html" %}
+{% extends "base_app.html" %}
+{% load static %}
 
 {% block titulo %}Importação de CSV{% endblock %}
 
-{% block content %}
-<h1>Importação de CSV</h1>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/importacao.css' %}">
+{% endblock %}
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="alerta alerta-{{ message.tags }}">{{ message }}</div>
-  {% endfor %}
-{% endif %}
+{% block page_content %}
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Importar</button>
-</form>
+<!-- Topbar -->
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Importação</div>
+    <h1>Importar dados da catraca</h1>
+  </div>
+</div>
 
-<h2>Histórico de importações</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Arquivo</th>
-            <th>Data</th>
-            <th>Registros</th>
-            <th>Status</th>
-            <th>Usuário</th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="import-grid">
+
+  <!-- Coluna esquerda: upload + resultado da última importação -->
+  <div>
+    <!-- Dropzone -->
+    <form method="POST" enctype="multipart/form-data" id="form-upload">
+      {% csrf_token %}
+      <label for="id_arquivo" class="dropzone">
+        <div class="ic-up">📄</div>
+        <h3>Arraste o arquivo CSV aqui</h3>
+        <p>ou clique para selecionar · máximo 10 MB · apenas .csv</p>
+        <span class="btn-upload">📂 Selecionar arquivo</span>
+        <input type="file" name="arquivo" id="id_arquivo"
+               accept=".csv" onchange="this.form.submit()">
+      </label>
+    </form>
+
+    <!-- Resultado da última importação (se existir) -->
+    {% if importacoes %}
+      {% with ultima=importacoes.0 %}
+      <div class="card" style="margin-top:18px;">
+        <div class="cab">
+          <div>
+            <h3>Última importação</h3>
+            <div class="leg">
+              {{ ultima.nome_arquivo }} ·
+              {{ ultima.data_tentativa|timesince }} atrás
+            </div>
+          </div>
+          <span class="badge">
+            {% if ultima.status == "SUCESSO" %}✓ Concluído
+            {% elif ultima.status == "FALHA" %}✗ Falha
+            {% else %}⏳ Processando{% endif %}
+          </span>
+        </div>
+        <div class="resumo-import resumo-row">
+          <div class="li-resumo" style="flex:1">
+            <div class="nm ok-nm">✓</div>
+            <div class="tx"><b>{{ ultima.total_registros }}</b> registros</div>
+          </div>
+          <div class="li-resumo" style="flex:1">
+            <div class="nm" style="background:var(--cinza-claro);color:var(--cinza);">📁</div>
+            <div class="tx">
+              <b>
+                <span class="status-pill status-{{ ultima.status|lower }}">
+                  {{ ultima.get_status_display }}
+                </span>
+              </b>
+            </div>
+          </div>
+        </div>
+        {% if ultima.motivo_erro %}
+          <div class="erros-form" style="margin-top:12px; font-size:12.5px;">
+            {{ ultima.motivo_erro }}
+          </div>
+        {% endif %}
+      </div>
+      {% endwith %}
+    {% endif %}
+  </div>
+
+  <!-- Coluna direita: histórico de importações -->
+  <div class="card">
+    <div class="cab">
+      <div>
+        <h3>Histórico de importações</h3>
+        <div class="leg">Últimos 20 envios</div>
+      </div>
+    </div>
+
+    {% if importacoes %}
+      <div class="resumo-import">
         {% for imp in importacoes %}
-        <tr>
-            <td>{{ imp.nome_arquivo }}</td>
-            <td>{{ imp.data_tentativa|date:"d/m/Y H:i" }}</td>
-            <td>{{ imp.total_registros }}</td>
-            <td>{{ imp.get_status_display }}</td>
-            <td>{{ imp.usuario.get_full_name|default:imp.usuario.username }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">Nenhuma importação registrada ainda.</td>
-        </tr>
+        <div class="li-resumo">
+          <div class="nm
+            {% if imp.status == 'SUCESSO' %}ok-nm
+            {% elif imp.status == 'FALHA' %}inv-nm
+            {% else %}dup-nm{% endif %}">
+            {% if imp.status == "SUCESSO" %}✓
+            {% elif imp.status == "FALHA" %}!
+            {% else %}⏳{% endif %}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div class="hist-nome" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{ imp.nome_arquivo }}
+            </div>
+            <div class="hist-meta">
+              {{ imp.total_registros }} registros ·
+              {{ imp.data_tentativa|date:"d/m/Y H:i" }} ·
+              {{ imp.usuario.get_full_name|default:imp.usuario.username }}
+            </div>
+          </div>
+          <span class="status-pill status-{{ imp.status|lower }}">
+            {{ imp.get_status_display }}
+          </span>
+        </div>
         {% endfor %}
-    </tbody>
-</table>
+      </div>
+    {% else %}
+      <p style="color:var(--cinza); font-size:13.5px; text-align:center; padding:24px 0;">
+        Nenhuma importação registrada ainda.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+
 {% endblock %}

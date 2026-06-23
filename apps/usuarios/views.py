@@ -49,6 +49,18 @@ def desativar_usuario(request, usuario_id):
 
 
 @login_required
+def reativar_usuario(request, usuario_id):
+
+    usuario = get_object_or_404(UsuarioSistema, id=usuario_id)
+
+    usuario.is_active = True
+
+    usuario.save()
+
+    return redirect("listar_usuarios")
+
+
+@login_required
 def dashboard(request):
     return render(request, "dashboard.html")
 
