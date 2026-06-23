@@ -1,7 +1,7 @@
 {% extends "base_app.html" %}
 {% load static %}
 
-{% block titulo %}Importação de CSV{% endblock %}
+{% block titulo %}Importação de dados{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/importacao.css' %}">
@@ -26,11 +26,11 @@
       {% csrf_token %}
       <label for="id_arquivo" class="dropzone">
         <div class="ic-up">📄</div>
-        <h3>Arraste o arquivo CSV aqui</h3>
-        <p>ou clique para selecionar · máximo 10 MB · apenas .csv</p>
+        <h3>Arraste o arquivo aqui</h3>
+        <p>ou clique para selecionar · máximo 10 MB · .csv ou .xlsx</p>
         <span class="btn-upload">📂 Selecionar arquivo</span>
         <input type="file" name="arquivo" id="id_arquivo"
-               accept=".csv" onchange="this.form.submit()">
+               accept=".csv,.xlsx,.xls" onchange="this.form.submit()">
       </label>
     </form>
 

@@ -30,10 +30,15 @@ def importar_csv(request):
             # pega o arquivo enviado
             arquivo = form.cleaned_data["arquivo"]
 
-            # valida se realmente é csv
-            if not arquivo.name.endswith(".csv"):
+            # valida extensão aceita
+            EXTENSOES_ACEITAS = (".csv", ".xlsx", ".xls")
+            if not arquivo.name.lower().endswith(EXTENSOES_ACEITAS):
 
-                messages.error(request, "Envie apenas arquivos CSV.")
+                messages.error(
+                    request,
+                    f"Formato não suportado. Envie apenas arquivos CSV ou XLSX "
+                    f"(recebido: {arquivo.name}).",
+                )
 
                 return redirect("importar_csv")
 
