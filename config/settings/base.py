@@ -71,6 +71,16 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Limite de tamanho de upload configurável (HU-017, critério 3).
+# Padrão: 10 MB. Ajuste via variável de ambiente UPLOAD_MAX_BYTES.
+DATA_UPLOAD_MAX_MEMORY_SIZE = config(
+    "UPLOAD_MAX_BYTES", default=10 * 1024 * 1024, cast=int
+)
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "usuarios.UsuarioSistema"

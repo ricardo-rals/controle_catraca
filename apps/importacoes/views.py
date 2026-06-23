@@ -1,19 +1,23 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 from .forms import UploadCSVForm
 from .models import Importacao
 
 
+@login_required
 def importar_csv(request):
     """
     Tela responsável por receber o CSV.
 
-    Nesta primeira versão:
+    Nesta versão:
     - recebe o arquivo
     - valida extensão
-    - registra a importação
-    - NÃO processa os dados
+    - registra a tentativa de importação (com usuário e arquivo)
+    - exibe o histórico de importações anteriores
+    - NÃO processa os dados (parsing/validação ficam para a HU-018/019,
+      que devem chamar ImportacaoService — ponto de integração em services.py)
     """
 
     if request.method == "POST":
@@ -33,8 +37,12 @@ def importar_csv(request):
 
                 return redirect("importar_csv")
 
-            # registra a tentativa de importação
-            Importacao.objects.create(nome_arquivo=arquivo.name)
+            # registra a tentativa de importação com os metadados (HU-021)
+            Importacao.objects.create(
+                nome_arquivo=arquivo.name,
+                arquivo=arquivo,
+                usuario=request.user,
+            )
 
             messages.success(request, "Arquivo recebido com sucesso.")
 
@@ -43,4 +51,11 @@ def importar_csv(request):
     else:
         form = UploadCSVForm()
 
-    return render(request, "importacoes/importar_csv.html", {"form": form})
+    # histórico de importações anteriores (HU-017, critério 1)
+    importacoes = Importacao.objects.order_by("-data_tentativa")[:20]
+
+    return render(
+        request,
+        "importacoes/importar_csv.html",
+        {"form": form, "importacoes": importacoes},
+    )
