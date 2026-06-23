@@ -1,3 +1,0 @@
-No vídeo: O ambiente do instrutor roda direto na máquina física.
-
-No projeto: A lógica do Git é exatamente a mesma (o controle de versão roda por fora na sua máquina), mas o seu código e as validações de qualidade (ruff, pytest) só são executados dentro dos containers através dos atalhos make up e make test.
