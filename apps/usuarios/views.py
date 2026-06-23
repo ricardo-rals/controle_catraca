@@ -56,3 +56,24 @@ def dashboard(request):
 @login_required
 def upload_arquivo(request):
     pass  # ... código existente da view ...
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    View customizada para obtenção de token JWT.
+    """
+    serializer_class = CustomTokenObtainPairSerializer
+
+class DummyProtectedView(APIView):
+    """
+    View de teste para validar a proteção de endpoints.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({"message": "Acesso autorizado!", "user": request.user.username})
