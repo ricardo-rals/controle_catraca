@@ -4,6 +4,11 @@ from django.shortcuts import redirect
 from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CustomTokenObtainPairSerializer
 
 
 @login_required
@@ -57,11 +62,6 @@ def dashboard(request):
 def upload_arquivo(request):
     pass  # ... código existente da view ...
 
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .serializers import CustomTokenObtainPairSerializer
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
