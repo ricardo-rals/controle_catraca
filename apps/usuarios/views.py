@@ -67,13 +67,18 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     View customizada para obtenção de token JWT.
     """
+
     serializer_class = CustomTokenObtainPairSerializer
+
 
 class DummyProtectedView(APIView):
     """
     View de teste para validar a proteção de endpoints.
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"message": "Acesso autorizado!", "user": request.user.username})
+        return Response(
+            {"message": "Acesso autorizado!", "user": request.user.username}
+        )

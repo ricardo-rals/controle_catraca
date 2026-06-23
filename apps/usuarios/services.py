@@ -1,5 +1,6 @@
 from rest_framework.exceptions import AuthenticationFailed
 
+
 class AuthService:
     @staticmethod
     def validate_user_for_token(user):
@@ -8,6 +9,8 @@ class AuthService:
         antes da emissão do token JWT.
         """
         if not user.is_active:
-            raise AuthenticationFailed('Usuário inativo. Acesso negado.', code='user_inactive')
-        
+            raise AuthenticationFailed(
+                "Usuário inativo. Acesso negado.", code="user_inactive"
+            )
+
         return True
