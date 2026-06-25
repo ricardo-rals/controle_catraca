@@ -40,9 +40,7 @@ class Importacao(models.Model):
 
 class FalhaImportacao(models.Model):
     importacao = models.ForeignKey(
-        'Importacao', 
-        on_delete=models.CASCADE, 
-        related_name='falhas'
+        "Importacao", on_delete=models.CASCADE, related_name="falhas"
     )
     linha_arquivo = models.IntegerField(verbose_name="Linha do Arquivo")
     motivo_erro = models.TextField(verbose_name="Motivo do Erro")
@@ -50,7 +48,7 @@ class FalhaImportacao(models.Model):
     class Meta:
         verbose_name = "Falha na Importação"
         verbose_name_plural = "Falhas nas Importações"
-        ordering = ['linha_arquivo']
+        ordering = ["linha_arquivo"]
 
     def __str__(self):
         return f"Importação #{self.importacao.id} | Linha {self.linha_arquivo} - {self.motivo_erro}"

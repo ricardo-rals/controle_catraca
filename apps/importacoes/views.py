@@ -64,44 +64,46 @@ def importar_csv(request):
 
 def dashboard_importacoes_view(request, importacao_id=None):
     # Busca o histórico de todas as importações (as mais recentes primeiro)
-    importacoes = Importacao.objects.all().order_by('-id')
-    
+    importacoes = Importacao.objects.all().order_by("-id")
+
     importacao_selecionada = None
     falhas = None
-    
+
     if importacao_id:
         importacao_selecionada = get_object_or_404(Importacao, id=importacao_id)
     elif importacoes.exists():
         # Por padrão, se não for passado um ID, seleciona a importação mais recente
         importacao_selecionada = importacoes.first()
-        
+
     if importacao_selecionada:
         # Utiliza o related_name 'falhas' definido no model FalhaImportacao
         falhas = importacao_selecionada.falhas.all()
-        
+
     context = {
-        'importacoes': importacoes,
-        'importacao': importacao_selecionada,
-        'falhas': falhas,
+        "importacoes": importacoes,
+        "importacao": importacao_selecionada,
+        "falhas": falhas,
     }
-    return render(request, 'importacoes/detalhe_importacao.html', context)
+    return render(request, "importacoes/detalhe_importacao.html", context)
 
 
 def exportar_erros_csv_view(request, importacao_id):
     importacao = get_object_or_404(Importacao, id=importacao_id)
     falhas = importacao.falhas.all()
-    
+
     # Configura a resposta HTTP para um arquivo CSV
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="erros_importacao_{importacao.id}.csv"'
-    
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="erros_importacao_{importacao.id}.csv"'
+    )
+
     writer = csv.writer(response)
-    
+
     # Escreve o cabeçalho
-    writer.writerow(['Linha do Arquivo', 'Motivo do Erro'])
-    
+    writer.writerow(["Linha do Arquivo", "Motivo do Erro"])
+
     # Escreve os dados das linhas rejeitadas
     for falha in falhas:
         writer.writerow([falha.linha_arquivo, falha.motivo_erro])
-        
+
     return response
