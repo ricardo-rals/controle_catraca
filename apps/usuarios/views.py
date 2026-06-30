@@ -9,6 +9,11 @@ from .mixins import PerfilRequeridoMixin
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CustomTokenObtainPairSerializer
 
 
 # classe resposnsavel por listar os usuarios do sistema, apenas para o perfil admin.
@@ -89,3 +94,24 @@ def dashboard(request):
 @login_required
 def upload_arquivo(request):
     pass  # ... código existente da view ...
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    View customizada para obtenção de token JWT.
+    """
+
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class DummyProtectedView(APIView):
+    """
+    View de teste para validar a proteção de endpoints.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            {"message": "Acesso autorizado!", "user": request.user.username}
+        )

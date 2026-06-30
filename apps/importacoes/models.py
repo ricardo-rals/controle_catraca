@@ -15,6 +15,9 @@ class Importacao(models.Model):
     arquivo = models.FileField()
     data_tentativa = models.DateTimeField(auto_now_add=True)
     total_registros = models.IntegerField(default=0)
+    total_validos = models.IntegerField(default=0)
+    total_invalidos = models.IntegerField(default=0)
+    total_duplicados = models.IntegerField(default=0)
     usuario = models.ForeignKey(UsuarioSistema, on_delete=models.CASCADE)
 
     STATUS_CHOICES = [
@@ -33,3 +36,19 @@ class Importacao(models.Model):
 
     def __str__(self):
         return f"{self.nome_arquivo} - {self.data_tentativa.strftime('%d/%m/%Y %H:%M')}"
+
+
+class FalhaImportacao(models.Model):
+    importacao = models.ForeignKey(
+        "Importacao", on_delete=models.CASCADE, related_name="falhas"
+    )
+    linha_arquivo = models.IntegerField(verbose_name="Linha do Arquivo")
+    motivo_erro = models.TextField(verbose_name="Motivo do Erro")
+
+    class Meta:
+        verbose_name = "Falha na Importação"
+        verbose_name_plural = "Falhas nas Importações"
+        ordering = ["linha_arquivo"]
+
+    def __str__(self):
+        return f"Importação #{self.importacao.id} | Linha {self.linha_arquivo} - {self.motivo_erro}"
