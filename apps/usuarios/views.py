@@ -5,7 +5,7 @@ from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView
-from .mixins import PerfilRequeridoMixin
+from .mixins import PerfilRequeridoMixin, perfil_requerido
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -51,6 +51,7 @@ class CustomLoginView(LoginView):
 
 
 @login_required
+@perfil_requerido("admin")
 def criar_usuario(request):
 
     if request.method == "POST":
@@ -75,6 +76,7 @@ def criar_usuario(request):
 
 
 @login_required
+@perfil_requerido("admin")
 def desativar_usuario(request, usuario_id):
 
     usuario = get_object_or_404(UsuarioSistema, id=usuario_id)

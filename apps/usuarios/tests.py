@@ -113,3 +113,60 @@ class TestJWTAuthentication:
         response = api_client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+class TestAutenticacaoSessao:
+    """Login de sessão e controle de acesso por perfil (HU-060)."""
+
+    def _criar(self, perfil="gestor", ativo=True):
+        return User.objects.create_user(
+            username=f"{perfil}{User.objects.count()}",
+            password="Senha12345",
+            email=f"{perfil}@ex.com",
+            perfil=perfil,
+            is_active=ativo,
+        )
+
+    def test_login_valido_cria_sessao(self, client):
+        self._criar()
+        assert client.login(
+            username=User.objects.first().username, password="Senha12345"
+        )
+
+    def test_senha_errada_nao_loga(self, client):
+        self._criar()
+        assert not client.login(
+            username=User.objects.first().username, password="errada"
+        )
+
+    def test_usuario_desativado_nao_loga(self, client):
+        self._criar(ativo=False)
+        assert not client.login(
+            username=User.objects.first().username, password="Senha12345"
+        )
+
+    def test_rota_interna_sem_sessao_redireciona(self, client):
+        resp = client.get(reverse("dashboard"))
+        assert resp.status_code == 302
+        assert "/accounts/login/" in resp.url
+        assert "next=" in resp.url
+
+    def test_gestor_barrado_em_rota_admin(self, client):
+        gestor = self._criar(perfil="gestor")
+        client.force_login(gestor)
+        resp = client.get(reverse("listar_usuarios"))
+        assert resp.status_code == 403
+
+    def test_admin_acessa_rota_admin(self, client):
+        admin = self._criar(perfil="admin")
+        client.force_login(admin)
+        resp = client.get(reverse("listar_usuarios"))
+        assert resp.status_code == 200
+
+    def test_perfil_define_acesso_ao_django_admin(self):
+        """HU-013: perfil admin → is_staff; gestor → não."""
+        admin = self._criar(perfil="admin")
+        gestor = self._criar(perfil="gestor")
+        assert admin.is_staff is True
+        assert gestor.is_staff is False

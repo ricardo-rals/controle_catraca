@@ -5,20 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from .forms import UploadCSVForm
 from .models import Importacao
+from .services import ImportacaoService
 
 
 @login_required
 def importar_csv(request):
     """
-    Tela responsável por receber o CSV.
-
-    Nesta versão:
-    - recebe o arquivo
-    - valida extensão
-    - registra a tentativa de importação (com usuário e arquivo)
-    - exibe o histórico de importações anteriores
-    - NÃO processa os dados (parsing/validação ficam para a HU-018/019,
-      que devem chamar ImportacaoService — ponto de integração em services.py)
+    Recebe o CSV, valida a extensão, registra a tentativa de importação
+    (HU-021) e dispara o pipeline de processamento (HU-018/019/020/021).
+    Em sucesso, leva para a tela de resultado (HU-022).
     """
 
     if request.method == "POST":
@@ -32,22 +27,37 @@ def importar_csv(request):
             arquivo = form.cleaned_data["arquivo"]
 
             # valida se realmente é csv
-            if not arquivo.name.endswith(".csv"):
+            if not arquivo.name.lower().endswith(".csv"):
 
                 messages.error(request, "Envie apenas arquivos CSV.")
 
                 return redirect("importar_csv")
 
             # registra a tentativa de importação com os metadados (HU-021)
-            Importacao.objects.create(
+            importacao = Importacao.objects.create(
                 nome_arquivo=arquivo.name,
                 arquivo=arquivo,
                 usuario=request.user,
             )
 
-            messages.success(request, "Arquivo recebido com sucesso.")
+            # processa o arquivo: parsing, validação, dedup, pseudonimização e
+            # persistência em lote. O serviço marca status SUCESSO ou FALHA.
+            ImportacaoService(importacao.arquivo.path, importacao).processar()
 
-            return redirect("importar_csv")
+            if importacao.status == "FALHA":
+                messages.error(
+                    request,
+                    f"Não foi possível importar o arquivo: {importacao.motivo_erro}",
+                )
+                return redirect("importar_csv")
+
+            messages.success(
+                request,
+                f"Importação concluída: {importacao.total_validos} válidos, "
+                f"{importacao.total_invalidos} inválidos, "
+                f"{importacao.total_duplicados} duplicados.",
+            )
+            return redirect("dashboard_detalhe", importacao_id=importacao.id)
 
     else:
         form = UploadCSVForm()
@@ -62,6 +72,7 @@ def importar_csv(request):
     )
 
 
+@login_required
 def dashboard_importacoes_view(request, importacao_id=None):
     # Busca o histórico de todas as importações (as mais recentes primeiro)
     importacoes = Importacao.objects.all().order_by("-id")
@@ -87,6 +98,7 @@ def dashboard_importacoes_view(request, importacao_id=None):
     return render(request, "importacoes/detalhe_importacao.html", context)
 
 
+@login_required
 def exportar_erros_csv_view(request, importacao_id):
     importacao = get_object_or_404(Importacao, id=importacao_id)
     falhas = importacao.falhas.all()
