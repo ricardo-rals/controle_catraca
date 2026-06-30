@@ -4,12 +4,45 @@ from django.shortcuts import redirect
 from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView
+from .mixins import PerfilRequeridoMixin
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-@login_required
-def listar_usuarios(request):
-    usuarios = UsuarioSistema.objects.all()
-    return render(request, "usuarios/listar_usuarios.html", {"usuarios": usuarios})
+# classe resposnsavel por listar os usuarios do sistema, apenas para o perfil admin.
+class ListarUsuariosView(LoginRequiredMixin, PerfilRequeridoMixin, ListView):
+    model = UsuarioSistema
+    template_name = "usuarios/listar_usuarios.html"
+    context_object_name = "usuarios"
+    perfil_requerido = "admin"
+
+    def get_queryset(self):
+        return UsuarioSistema.objects.all().defer("password")
+
+
+# classe responsavel por gerar o relatorio do gestor, apenas para o perfil gestor.
+class RelatorioGestorView(LoginRequiredMixin, PerfilRequeridoMixin, ListView):
+    model = UsuarioSistema  # ou outro modelo de dados que gestores precisam
+    template_name = "usuarios/dashboard.html"
+    context_object_name = "dados"
+    perfil_requerido = "gestor"
+
+
+# login view personalizada para redirecionar os usuários com base em seu perfil após o login.
+class CustomLoginView(LoginView):
+    template_name = "usuarios/login.html"
+
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        perfil = getattr(self.request.user, "perfil", None)
+        if perfil == "admin":
+            return reverse_lazy("listar_usuarios")
+        elif perfil == "gestor":
+            return reverse_lazy("relatorio_gestor")
+        return reverse_lazy("dashboard")
 
 
 @login_required

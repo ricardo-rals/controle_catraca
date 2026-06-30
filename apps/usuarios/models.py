@@ -10,6 +10,8 @@ class UsuarioSistema(AbstractUser):
     perfil = models.CharField(
         "Perfil", max_length=20, choices=PERFIL_CHOICES, default="gestor"
     )
+    # perguntar o perfil do usuario
+    REQUIRED_FIELDS = ["email", "perfil"]
 
     class Meta:
         verbose_name = "Usuário do Sistema"
