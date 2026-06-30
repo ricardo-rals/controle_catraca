@@ -1,14 +1,17 @@
 # Register your models here.
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 from .models import UsuarioSistema
 
 
 @admin.register(UsuarioSistema)
-class UsuarioSistemaAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (
-        ("Permissões Customizadas", {"fields": ("perfil",)}),
-    )
+class UsuarioSistemaAdmin(admin.ModelAdmin):
+    def has_module_permission(self, request):
+        # só permite se o usuário estiver logado e for admin
+        return (
+            request.user.is_authenticated
+            and getattr(request.user, "perfil", None) == "admin"
+        )
+
     list_display = [
         "username",
         "email",
