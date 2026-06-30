@@ -26,4 +26,5 @@ urlpatterns = [
     path("importacoes/", include("apps.importacoes.urls")),
     path("dashboard/", dashboard, name="dashboard"),
     path("", include("apps.usuarios.urls")),
+    path("api/analytics/", include("apps.analytics.urls")),
 ]
