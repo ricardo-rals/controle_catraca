@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block titulo %}Usuários do sistema{% endblock %}
+
+{% block content %}
+<h1>Usuários do sistema</h1>
+
+<a href="{% url 'criar_usuario' %}">+ Novo usuário</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in usuarios %}
+        <tr>
+            <td>{{ u.get_full_name|default:u.username }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.get_perfil_display }}</td>
+            <td>{% if u.is_active %}Ativo{% else %}Inativo{% endif %}</td>
+            <td>
+                {% if u.is_active %}
+                <form
+                    method="post"
+                    action="{% url 'desativar_usuario' u.id %}"
+                    style="display:inline"
+                >
+                    {% csrf_token %}
+                    <button type="submit">Desativar</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Nenhum usuário cadastrado.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

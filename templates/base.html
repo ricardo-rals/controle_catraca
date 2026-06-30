@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Sistema CAC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}Sistema CAC{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  {% block navbar %}{% include "partials/navbar.html" %}{% endblock %}
+  
+  {% block content %}
+  {% endblock %}
+</body>
+</html>

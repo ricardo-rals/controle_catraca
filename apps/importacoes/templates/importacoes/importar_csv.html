@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block titulo %}Importação de CSV{% endblock %}
+
+{% block content %}
+<h1>Importação de CSV</h1>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alerta alerta-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Importar</button>
+</form>
+
+<h2>Histórico de importações</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Arquivo</th>
+            <th>Data</th>
+            <th>Registros</th>
+            <th>Status</th>
+            <th>Usuário</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for imp in importacoes %}
+        <tr>
+            <td>{{ imp.nome_arquivo }}</td>
+            <td>{{ imp.data_tentativa|date:"d/m/Y H:i" }}</td>
+            <td>{{ imp.total_registros }}</td>
+            <td>{{ imp.get_status_display }}</td>
+            <td>{{ imp.usuario.get_full_name|default:imp.usuario.username }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Nenhuma importação registrada ainda.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
