@@ -87,6 +87,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "usuarios.UsuarioSistema"
 
+# Salt da pseudonimização determinística das credenciais (HU-020).
+PSEUDONIMIZACAO_SALT = config("PSEUDONIMIZACAO_SALT", default="")
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
