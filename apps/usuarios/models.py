@@ -17,5 +17,12 @@ class UsuarioSistema(AbstractUser):
         verbose_name = "Usuário do Sistema"
         verbose_name_plural = "Usuários do Sistema"
 
+    def save(self, *args, **kwargs):
+        # HU-013: perfil "admin" acessa o Django Admin; "gestor" não.
+        # Superusuários mantêm acesso sempre.
+        if not self.is_superuser:
+            self.is_staff = self.perfil == "admin"
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.username} ({self.get_perfil_display()})"

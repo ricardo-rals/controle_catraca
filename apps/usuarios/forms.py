@@ -25,6 +25,9 @@ class UsuarioSistemaForm(forms.ModelForm):
         senha = dados.get("senha")
         confirmar = dados.get("confirmar_senha")
 
+        if not senha:
+            raise forms.ValidationError("Informe a senha.")
+
         if senha != confirmar:
             raise forms.ValidationError("As senhas não coincidem.")
 

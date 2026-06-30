@@ -1,22 +1,132 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Login{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
 
 {% block content %}
+<div class="login-wrap">
 
-<div class="login-container">
-    <h1>Sistema CAC</h1>
-    <p>Controle de Acesso do Campus</p>
+  <!-- Painel esquerdo — identidade visual -->
+  <div class="login-arte">
+    <div class="topo">
+      <div class="logo-grande">🎫</div>
+      <h2>Controle de Acesso<br>do Campus</h2>
+      <p>Transformando os registros das catracas eletrônicas em informação estratégica para a gestão do IFBA.</p>
+      <div class="stats">
+        <div>
+          <div class="n">5</div>
+          <div class="l">pontos de acesso</div>
+        </div>
+        <div>
+          <div class="n">LGPD</div>
+          <div class="l">dados protegidos</div>
+        </div>
+        <div>
+          <div class="n">2</div>
+          <div class="l">perfis de acesso</div>
+        </div>
+      </div>
+    </div>
+    <div class="rodape">IFBA · Campus Vitória da Conquista · Fase 2 — Desafio 1</div>
+  </div>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Entrar</button>
-    </form>
+  <!-- Painel direito — formulário -->
+  <div class="login-form">
+    <div class="selo">Acesso restrito</div>
+    <h3>Bem-vindo de volta</h3>
+    <p class="sub">Entre com suas credenciais para acessar o painel de gestão.</p>
 
     {% if form.errors %}
-        <div class="error">
-            <p>Usuário ou senha inválidos. Tente novamente.</p>
-        </div>
+      <div class="erro-login">
+        Usuário ou senha inválidos. Verifique suas credenciais e tente novamente.
+      </div>
     {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <div class="campo">
+        <label for="id_username">Usuário</label>
+        <input
+          type="text"
+          name="username"
+          id="id_username"
+          placeholder="seu.nome ou matrícula"
+          autofocus
+          autocomplete="username"
+          value="{{ form.username.value|default:'' }}"
+        >
+      </div>
+
+      <div class="campo">
+        <label for="id_password">Senha</label>
+        <input
+          type="password"
+          name="password"
+          id="id_password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        >
+      </div>
+
+      <div class="linha-aux">
+        <label><input type="checkbox" name="lembrar_dados" id="lembrar_dados"> Lembrar meus dados</label>
+        <a href="{% url 'password_reset' %}">Esqueci minha senha</a>
+      </div>
+
+      <button type="submit" class="btn-principal">Entrar no sistema →</button>
+    </form>
+
+    <div class="nota-rodape">Dois perfis disponíveis: Administrador e Gestor</div>
+  </div>
+
 </div>
 
+<script>
+/*
+  "Lembrar meus dados": guarda APENAS o nome de usuário num cookie (30 dias)
+  e pré-preenche o campo no próximo acesso. A senha nunca é armazenada.
+*/
+(function () {
+  var form = document.querySelector(".login-form form");
+  var campoUser = document.getElementById("id_username");
+  var checkbox = document.getElementById("lembrar_dados");
+  if (!form || !campoUser || !checkbox) return;
+
+  function lerCookie(nome) {
+    var m = document.cookie.match("(^|;)\\s*" + nome + "\\s*=\\s*([^;]+)");
+    return m ? decodeURIComponent(m.pop()) : "";
+  }
+  function gravarCookie(nome, valor, dias) {
+    var d = new Date();
+    d.setTime(d.getTime() + dias * 24 * 60 * 60 * 1000);
+    document.cookie = nome + "=" + encodeURIComponent(valor) +
+      ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+  }
+  function apagarCookie(nome) {
+    document.cookie = nome + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+  }
+
+  // Ao carregar: se houver usuário salvo, pré-preenche e marca o checkbox
+  var salvo = lerCookie("lembrar_usuario");
+  if (salvo) {
+    campoUser.value = salvo;
+    checkbox.checked = true;
+  }
+
+  // Ao enviar: grava ou apaga o cookie conforme o checkbox
+  form.addEventListener("submit", function () {
+    if (checkbox.checked) {
+      gravarCookie("lembrar_usuario", campoUser.value, 30);
+    } else {
+      apagarCookie("lembrar_usuario");
+    }
+  });
+})();
+</script>
 {% endblock %}

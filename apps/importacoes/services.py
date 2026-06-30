@@ -1,11 +1,12 @@
+import logging
+
 import pandas as pd
 from django.db import transaction
 from django.db.models import Q
-import logging
 
 from apps.acessos.models import PontoAcesso, RegistroAcesso
-from .utils.pseudonimizacao import criptografar_valor
-from .models import Importacao
+from .utils.pseudonimizacao import pseudonimizar_identificador
+from .models import Importacao, FalhaImportacao
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +30,15 @@ class ImportacaoService:
     def __init__(self, arquivo, importacao: Importacao):
         self.arquivo = arquivo
         self.importacao = importacao
+        self._falhas: list[FalhaImportacao] = []
 
     def processar(self):
-        """Ponto de entrada: processa o arquivo CSV e persiste os registros válidos."""
+        """
+        Ponto de entrada: processa o arquivo CSV e persiste os registros válidos.
+
+        Não re-levanta exceções: em caso de erro a importação fica com status
+        FALHA e o motivo preenchido, e a view decide o feedback pelo status.
+        """
         try:
             with transaction.atomic():
                 self._executar_pipeline()
@@ -40,48 +47,74 @@ class ImportacaoService:
                 "Erro inesperado ao processar importação %s", self.importacao.pk
             )
             self._marcar_como_falha(exc)
-            raise
 
         return self.importacao
 
+    # Cabeçalho real do export da catraca (Title-Case com espaços).
+    COL_CREDENCIAL = "Número da Credencial"
+    COL_DATA = "Data do Evento"
+    COL_EQUIPAMENTO = "Equipamento"
+    COL_DIRECAO = "Direção do Evento"
+    COLUNAS_OBRIGATORIAS = (COL_CREDENCIAL, COL_DATA)
+
     def _executar_pipeline(self):
-        # 1. Carregue o CSV com Pandas.
-        df = pd.read_csv(self.arquivo)
-
-        total_original = len(df)
-
-        # Consolidar timestamp
-        if "horario_entrada" in df.columns and "horario_saida" in df.columns:
-            df["timestamp"] = df["horario_entrada"].fillna(df["horario_saida"])
-        elif "horario_entrada" in df.columns:
-            df["timestamp"] = df["horario_entrada"]
-        elif "horario_saida" in df.columns:
-            df["timestamp"] = df["horario_saida"]
+        # 1. Carrega CSV ou Excel conforme a extensão (tudo como texto p/ validar).
+        if isinstance(self.arquivo, str) and self.arquivo.lower().endswith(
+            (".xlsx", ".xls")
+        ):
+            df = pd.read_excel(self.arquivo, dtype=str)
         else:
-            df["timestamp"] = None
+            df = pd.read_csv(self.arquivo, dtype=str)
+        df.columns = [str(c).strip() for c in df.columns]
 
-        df["credencial"] = df.get("identificador_pessoa", None)
-        df["ponto_acesso_nome"] = df.get("ponto_acesso", None)
-        df["status_acesso"] = df.get("status", "")
+        # HU-018: cabeçalho obrigatório. Coluna essencial ausente aborta com erro claro.
+        faltando = [c for c in self.COLUNAS_OBRIGATORIAS if c not in df.columns]
+        if faltando:
+            raise ValueError(
+                "Cabeçalho inválido: coluna(s) obrigatória(s) ausente(s): "
+                + ", ".join(faltando)
+            )
 
-        # 2. Inválidos: Remova linhas onde credencial ou data/hora estejam vazias.
-        df.dropna(subset=["credencial", "timestamp"], inplace=True)
-        self.importacao.total_invalidos = total_original - len(df)
+        # Normaliza para os nomes internos usados pelo restante do pipeline.
+        df["credencial"] = df[self.COL_CREDENCIAL]
+        df["timestamp"] = df[self.COL_DATA]
+        df["ponto_acesso_nome"] = df.get(self.COL_EQUIPAMENTO)
+        df["status_acesso"] = df.get(self.COL_DIRECAO, "")
 
-        # Tentar converter timestamp para datetime UTC (necessário para banco de dados)
-        df["timestamp_dt"] = pd.to_datetime(df["timestamp"], errors="coerce", utc=True)
-        invalidos_data = df["timestamp_dt"].isna().sum()
-        if invalidos_data > 0:
-            df.dropna(subset=["timestamp_dt"], inplace=True)
-            self.importacao.total_invalidos += invalidos_data
+        # 2. Inválidos: registra (linha + motivo) linhas com credencial ou data vazias.
+        falta_cred = df["credencial"].isna() | df["credencial"].astype(
+            str
+        ).str.strip().isin(["", "nan"])
+        falta_data = df["timestamp"].isna() | df["timestamp"].astype(
+            str
+        ).str.strip().isin(["", "nan"])
+        for idx in df.index[falta_cred | falta_data]:
+            motivos = []
+            if falta_cred[idx]:
+                motivos.append("credencial vazia")
+            if falta_data[idx]:
+                motivos.append("data do evento vazia")
+            self._registrar_falha(idx, " | ".join(motivos))
+        df = df[~(falta_cred | falta_data)]
+
+        # Converte data BR (dd/mm/aaaa hh:mm:ss). Data não parseável vira falha.
+        df["timestamp_dt"] = pd.to_datetime(
+            df["timestamp"], errors="coerce", dayfirst=True, utc=True
+        )
+        data_invalida = df["timestamp_dt"].isna()
+        for idx in df.index[data_invalida]:
+            self._registrar_falha(idx, "data inválida")
+        df = df[~data_invalida]
+
+        self.importacao.total_invalidos = len(self._falhas)
 
         if df.empty:
             self._finalizar_importacao(df)
             return
 
-        # 3. Transformação 1 (LGPD): Aplique uma função de Hash na coluna de credencial
+        # 3. Transformação 1 (LGPD): pseudônimo determinístico da credencial (HU-020)
         df["identificador_pseudonimizado"] = df["credencial"].apply(
-            lambda x: criptografar_valor(str(x).strip())
+            lambda x: pseudonimizar_identificador(str(x).strip())
         )
 
         # 4. Transformação 2 (FK): Mapeie os nomes dos equipamentos (PontoAcesso)
@@ -170,6 +203,16 @@ class ImportacaoService:
         self._finalizar_importacao(df)
         self._inserir_no_banco(df)
 
+    def _registrar_falha(self, idx, motivo):
+        # idx: índice 0-based do read_csv → linha no arquivo = idx + 2 (cabeçalho + base 1)
+        self._falhas.append(
+            FalhaImportacao(
+                importacao=self.importacao,
+                linha_arquivo=int(idx) + 2,
+                motivo_erro=motivo,
+            )
+        )
+
     def _finalizar_importacao(self, df):
         self.importacao.total_validos = len(df)
         self.importacao.total_registros = (
@@ -187,6 +230,9 @@ class ImportacaoService:
                 "motivo_erro",
             ]
         )
+        # Persiste as linhas rejeitadas para a tela de resultado e o CSV de erros (HU-022).
+        if self._falhas:
+            FalhaImportacao.objects.bulk_create(self._falhas, batch_size=TAMANHO_LOTE)
 
     def _inserir_no_banco(self, df):
         if df.empty:

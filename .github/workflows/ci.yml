@@ -28,6 +28,7 @@ jobs:
     env:
       SECRET_KEY: chave-de-teste-do-ci
       DEBUG: "True"
+      PSEUDONIMIZACAO_SALT: salt-de-teste-do-ci
       DATABASE_URL: postgres://cac_user:cac_password@localhost:5432/cac_db
 
     steps:

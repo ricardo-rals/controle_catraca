@@ -1,0 +1,174 @@
+/* ====================================================
+   LOGIN — layout e estilo da tela de autenticação
+   ==================================================== */
+
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Painel esquerdo — arte/identidade visual */
+.login-arte {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(18,167,103,.4), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(6,92,56,.5), transparent 50%),
+    linear-gradient(150deg, var(--verde-escuro), var(--tinta));
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 56px;
+}
+
+.login-arte::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(255,255,255,.03) 38px, rgba(255,255,255,.03) 39px),
+    repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,.03) 38px, rgba(255,255,255,.03) 39px);
+}
+
+.login-arte .topo { position: relative; color: #fff; }
+
+.login-arte .topo .logo-grande {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,.2);
+}
+
+.login-arte h2 {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.login-arte p {
+  color: rgba(255,255,255,.75);
+  font-size: 15px;
+  max-width: 380px;
+}
+
+.login-arte .rodape {
+  position: relative;
+  color: rgba(255,255,255,.5);
+  font-size: 12.5px;
+}
+
+.login-arte .stats {
+  position: relative;
+  display: flex;
+  gap: 32px;
+  margin-top: 28px;
+}
+
+.login-arte .stats div .n {
+  font-family: 'Sora';
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.login-arte .stats div .l {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+}
+
+/* Painel direito — formulário */
+.login-form {
+  background: var(--branco);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 56px 64px;
+}
+
+.login-form .selo {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--verde);
+  margin-bottom: 10px;
+}
+
+.login-form h3 { font-size: 27px; font-weight: 700; margin-bottom: 6px; }
+.login-form .sub { color: var(--cinza); font-size: 14.5px; margin-bottom: 34px; }
+
+.login-form .campo input {
+  padding: 13px 15px;
+  font-size: 14.5px;
+}
+
+.login-form .linha-aux {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 26px;
+  font-size: 13px;
+}
+
+.login-form .linha-aux label {
+  color: var(--cinza);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.login-form .linha-aux a {
+  color: var(--verde);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-principal {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Sora';
+  color: #fff;
+  background: var(--verde);
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: all .18s;
+}
+
+.btn-principal:hover {
+  background: var(--verde-escuro);
+  transform: translateY(-1px);
+}
+
+.login-form .nota-rodape {
+  margin-top: 28px;
+  font-size: 12.5px;
+  color: var(--cinza);
+  text-align: center;
+}
+
+.login-form .erro-login {
+  background: rgba(224,82,77,.08);
+  border: 1px solid rgba(224,82,77,.2);
+  border-radius: 10px;
+  padding: 11px 14px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+  color: #8b1a1a;
+}
+
+@media (max-width: 880px) {
+  .login-wrap { grid-template-columns: 1fr; }
+  .login-arte { display: none; }
+  .login-form { padding: 48px 28px; }
+}

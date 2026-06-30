@@ -10,6 +10,11 @@ urlpatterns = [
         views.desativar_usuario,
         name="desativar_usuario",
     ),
+    path(
+        "usuarios/<int:usuario_id>/reativar/",
+        views.reativar_usuario,
+        name="reativar_usuario",
+    ),
     path("usuarios/", views.ListarUsuariosView.as_view(), name="listar_usuarios"),
     # Endpoints de Autenticação JWT
     path(
