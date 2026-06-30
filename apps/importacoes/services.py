@@ -1,5 +1,6 @@
 from django.db import transaction
 import logging
+import pandas as pd
 
 from apps.acessos.models import PontoAcesso, RegistroAcesso
 from .utils.pseudonimizacao import criptografar_valor
@@ -102,3 +103,58 @@ class ImportacaoService:
         self.importacao.status = "FALHA"
         self.importacao.motivo_erro = str(exc)[:255]
         self.importacao.save(update_fields=["status", "motivo_erro"])
+
+    def validar_e_processar_csv(arquivo_obj):
+        COLUNAS_OBRIGATORIAS = [
+        'Número da Credencial', 'Nome', 'Data do Evento', 'Estrutura Organizacional'
+        'Grupo de Equipamento', 'Área de Origem', 'Área de Destino', 'Equipamento',
+        'Evento', 'Direção do Evento', 'Tipo de Consulta'
+        ]
+
+        """
+        Lê um arquivo CSV, valida a existência do cabeçalho e separa 
+        as linhas perfeitas das linhas com defeito.
+        """
+        resultado = {
+            "sucesso": True,
+            "erro_fatal": None,
+            "linhas_validas": [],
+            "linhas_invalidas": []
+        }
+
+        try:
+            df = pd.read_csv(arquivo_obj, dtype=str)
+        except Exception as e:
+            resultado["sucesso"] = False
+            resultado["erro_fatal"] = f"Não foi possível ler o arquivo. Verifique se é um CSV válido. Erro: {str(e)}"
+            return resultado
+
+        colunas_do_arquivo = [coluna.strip().lower() for coluna in df.columns]
+
+        for coluna_esperada in COLUNAS_OBRIGATORIAS:
+            if coluna_esperada not in colunas_do_arquivo:
+                resultado["sucesso"] = False
+                resultado["erro_fatal"] = f"A coluna obrigatória '{coluna_esperada}' não foi encontrada no cabeçalho."
+                return resultado
+
+        for index, linha in df.iterrows():
+            linha_em_formato_dicionario = linha.to_dict()
+            numero_da_linha_no_excel = index + 2  # +1 do cabeçalho, +1 porque programador começa a contar do zero
+
+            erros_desta_linha = []
+
+            for coluna in COLUNAS_OBRIGATORIAS:
+                valor = linha_em_formato_dicionario.get(coluna)
+                if pd.isna(valor) or str(valor).strip() == "":
+                    erros_desta_linha.append(f"O campo '{coluna}' está vazio.")
+
+            if erros_desta_linha:
+                resultado["linhas_invalidas"].append({
+                    "linha": numero_da_linha_no_excel,
+                    "dados": linha_em_formato_dicionario,
+                    "motivo": " | ".join(erros_desta_linha)
+                })
+            else:
+                resultado["linhas_validas"].append(linha_em_formato_dicionario)
+
+        return resultado
