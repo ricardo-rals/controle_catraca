@@ -1,47 +1,87 @@
-{% extends "base.html" %}
+{% extends "base_app.html" %}
+{% load static %}
 
 {% block titulo %}Usuários do sistema{% endblock %}
 
-{% block content %}
-<h1>Usuários do sistema</h1>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}">
+{% endblock %}
 
-<a href="{% url 'criar_usuario' %}">+ Novo usuário</a>
+{% block page_content %}
 
-<table>
+<!-- Topbar -->
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Administração / Usuários</div>
+    <h1>Usuários do sistema</h1>
+  </div>
+  <div class="acoes">
+    <a href="{% url 'criar_usuario' %}" class="btn-pri">+ Novo usuário</a>
+  </div>
+</div>
+
+<!-- Tabela de usuários -->
+<div class="tabela-card">
+  <table>
     <thead>
-        <tr>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>Perfil</th>
-            <th>Status</th>
-            <th>Ações</th>
-        </tr>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Perfil</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
     </thead>
     <tbody>
-        {% for u in usuarios %}
-        <tr>
-            <td>{{ u.get_full_name|default:u.username }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.get_perfil_display }}</td>
-            <td>{% if u.is_active %}Ativo{% else %}Inativo{% endif %}</td>
-            <td>
-                {% if u.is_active %}
-                <form
-                    method="post"
-                    action="{% url 'desativar_usuario' u.id %}"
-                    style="display:inline"
-                >
-                    {% csrf_token %}
-                    <button type="submit">Desativar</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">Nenhum usuário cadastrado.</td>
-        </tr>
-        {% endfor %}
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.get_full_name|default:u.username }}</td>
+        <td>{{ u.email|default:"—" }}</td>
+        <td>
+          {% if u.perfil == "admin" %}
+            <span class="pill admin">Administrador</span>
+          {% else %}
+            <span class="pill gestor">Gestor</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.is_active %}
+            <span class="status-ativo">Ativo</span>
+          {% else %}
+            <span class="status-inativo">Inativo</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u == request.user %}
+            <span style="font-size:12px; color:var(--cinza);">Conta atual</span>
+          {% elif u.is_active %}
+            <form method="post"
+                  action="{% url 'desativar_usuario' u.id %}"
+                  style="display:inline"
+                  onsubmit="return confirm('Desativar {{ u.get_full_name|default:u.username }}?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-sec" style="padding:6px 12px;">Desativar</button>
+            </form>
+          {% else %}
+            <form method="post"
+                  action="{% url 'reativar_usuario' u.id %}"
+                  style="display:inline"
+                  onsubmit="return confirm('Reativar {{ u.get_full_name|default:u.username }}?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-pri" style="padding:6px 12px;">Reativar</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" style="text-align:center; color:var(--cinza); padding:32px;">
+          Nenhum usuário cadastrado ainda.
+        </td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+</div>
+
 {% endblock %}

@@ -1,0 +1,177 @@
+/* ====================================================
+   DASHBOARD — filtros, KPIs, gráficos
+   ==================================================== */
+
+/* Chips de filtro de período */
+.filtros {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.chip-filtro {
+  padding: 8px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 30px;
+  border: 1.5px solid var(--linha);
+  background: #fff;
+  color: var(--cinza);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.chip-filtro.ativo { background: var(--verde); border-color: var(--verde); color: #fff; }
+.chip-filtro:hover:not(.ativo) { border-color: var(--verde); color: var(--verde); }
+
+/* KPIs */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.kpi {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--sombra);
+  border: 1px solid var(--linha);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: .07;
+}
+
+.kpi .ic-kpi {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+
+.kpi .valor { font-family: 'Sora'; font-size: 30px; font-weight: 700; line-height: 1; }
+.kpi .label { font-size: 13px; color: var(--cinza); margin-top: 6px; }
+
+.kpi .delta {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kpi .delta.up   { color: var(--verde-claro); }
+.kpi .delta.down { color: var(--vermelho); }
+.kpi .delta.neutro { color: var(--cinza); }
+
+.kpi.v1 .ic-kpi { background: rgba(18,167,103,.12); color: var(--verde); }
+.kpi.v1::after  { background: var(--verde); }
+.kpi.v2 .ic-kpi { background: rgba(45,125,210,.12); color: var(--azul); }
+.kpi.v2::after  { background: var(--azul); }
+.kpi.v3 .ic-kpi { background: rgba(245,166,35,.14); color: var(--amarelo); }
+.kpi.v3::after  { background: var(--amarelo); }
+.kpi.v4 .ic-kpi { background: rgba(224,82,77,.12); color: var(--vermelho); }
+.kpi.v4::after  { background: var(--vermelho); }
+
+/* Grade de gráficos */
+.grid-graficos {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+/* Gráfico de linha SVG */
+.linha-svg { width: 100%; height: 180px; }
+
+/* Gráfico de barras (horários de pico) */
+.barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 180px;
+  padding-top: 10px;
+}
+
+.barras .barra {
+  flex: 1;
+  background: linear-gradient(180deg, var(--verde-claro), var(--verde));
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  transition: all .3s;
+  min-height: 6px;
+}
+
+.barras .barra:hover { filter: brightness(1.1); }
+.barras .barra.pico { background: linear-gradient(180deg, var(--amarelo), #d4881a); }
+
+.barras .barra span {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  color: var(--cinza);
+  white-space: nowrap;
+}
+
+.barras-wrap { padding-bottom: 24px; }
+
+/* Gráfico donut */
+.donut-wrap { display: flex; align-items: center; gap: 24px; }
+
+.legenda-donut { display: flex; flex-direction: column; gap: 11px; }
+
+.legenda-donut .item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+}
+
+.legenda-donut .pnt { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.legenda-donut .item .pct { margin-left: auto; font-weight: 600; color: var(--tinta); }
+
+/* Estado vazio dos gráficos (enquanto não há dados reais) */
+.grafico-wrap { position: relative; }
+
+.grafico-wrap .sem-dados {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cinza);
+  font-size: 13px;
+}
+
+.barras-vazio {
+  height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--cinza);
+  font-size: 13px;
+  border: 1px dashed var(--linha);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+@media (max-width: 880px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .grid-graficos { grid-template-columns: 1fr; }
+}

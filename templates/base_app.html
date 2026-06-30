@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% with url_name=request.resolver_match.url_name %}
+<div class="app">
+
+  <!-- ======= SIDEBAR ======= -->
+  <aside class="sidebar">
+    <div class="marca-app">
+      <span class="logo">🎫</span> Sistema CAC
+    </div>
+
+    <div class="grupo-label">Principal</div>
+    <nav>
+      <a href="{% url 'dashboard' %}"
+         class="{% if url_name == 'dashboard' %}ativo{% endif %}">
+        <span class="ic">📊</span> Dashboard
+      </a>
+      <a href="#" class="desabilitado">
+        <span class="ic">🔍</span> Consultas
+      </a>
+      <a href="{% url 'importar_csv' %}"
+         class="{% if url_name == 'importar_csv' %}ativo{% endif %}">
+        <span class="ic">📥</span> Importação
+      </a>
+      <a href="#" class="desabilitado">
+        <span class="ic">📄</span> Relatórios
+      </a>
+    </nav>
+
+    <div class="grupo-label">Administração</div>
+    <nav>
+      <a href="{% url 'listar_usuarios' %}"
+         class="{% if url_name == 'listar_usuarios' or url_name == 'criar_usuario' %}ativo{% endif %}">
+        <span class="ic">👥</span> Usuários
+      </a>
+      <a href="#" class="desabilitado">
+        <span class="ic">⏰</span> Regras de Horário
+      </a>
+    </nav>
+
+    <div class="user">
+      <div class="av">
+        {{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}
+      </div>
+      <div class="info">
+        <div class="nome">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="papel">{{ request.user.get_perfil_display }}</div>
+        <form method="post" action="{% url 'logout' %}" class="form-logout">
+          {% csrf_token %}
+          <button type="submit" class="btn-logout">Sair</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======= CONTEÚDO ======= -->
+  <main class="conteudo">
+    {% if messages %}
+      <div class="messages-wrapper">
+        {% for message in messages %}
+          <div class="alerta alerta-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block page_content %}{% endblock %}
+  </main>
+
+</div>
+{% endwith %}
+{% endblock %}

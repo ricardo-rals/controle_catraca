@@ -58,8 +58,13 @@ class ImportacaoService:
     COLUNAS_OBRIGATORIAS = (COL_CREDENCIAL, COL_DATA)
 
     def _executar_pipeline(self):
-        # 1. Carregue o CSV com Pandas (tudo como texto p/ validar antes de converter).
-        df = pd.read_csv(self.arquivo, dtype=str)
+        # 1. Carrega CSV ou Excel conforme a extensão (tudo como texto p/ validar).
+        if isinstance(self.arquivo, str) and self.arquivo.lower().endswith(
+            (".xlsx", ".xls")
+        ):
+            df = pd.read_excel(self.arquivo, dtype=str)
+        else:
+            df = pd.read_csv(self.arquivo, dtype=str)
         df.columns = [str(c).strip() for c in df.columns]
 
         # HU-018: cabeçalho obrigatório. Coluna essencial ausente aborta com erro claro.
