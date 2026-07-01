@@ -117,9 +117,7 @@ def test_duplicata_contra_banco_descartada():
 @pytest.mark.django_db
 def test_reimportacao_enriquece_registro_com_campos_antes_vazios():
     # 1ª importação: só cabeçalho mínimo, campos extras ficam None no banco.
-    primeira = _processar(
-        _csv("111,02/06/2026 08:00:00,CATRACA A,Entrada")
-    )
+    primeira = _processar(_csv("111,02/06/2026 08:00:00,CATRACA A,Entrada"))
     assert primeira.total_validos == 1
     reg = RegistroAcesso.objects.get(importacao=primeira)
     assert reg.evento is None and reg.foto is None

@@ -114,8 +114,8 @@ class ImportacaoService:
         if eh_xlsx and self.COL_FOTO in df.columns:
             urls_foto = _extrair_hyperlinks_coluna(self.arquivo, self.COL_FOTO)
             if urls_foto:
-                df[self.COL_FOTO] = df.index.to_series().map(urls_foto).fillna(
-                    df[self.COL_FOTO]
+                df[self.COL_FOTO] = (
+                    df.index.to_series().map(urls_foto).fillna(df[self.COL_FOTO])
                 )
 
         # HU-018: cabeçalho obrigatório. Coluna essencial ausente aborta com erro claro.
@@ -184,7 +184,9 @@ class ImportacaoService:
         grupo_por_equipamento = (
             df.dropna(subset=["ponto_acesso_nome"])
             .groupby("ponto_acesso_nome")["grupo_equipamento"]
-            .apply(lambda s: next((v for v in s if pd.notna(v) and str(v).strip()), None))
+            .apply(
+                lambda s: next((v for v in s if pd.notna(v) and str(v).strip()), None)
+            )
             .to_dict()
         )
 
@@ -339,7 +341,11 @@ class ImportacaoService:
             return False
         if not atual:
             return True
-        if campo == "foto" and str(atual).strip() == "Ver Imagem" and novo != "Ver Imagem":
+        if (
+            campo == "foto"
+            and str(atual).strip() == "Ver Imagem"
+            and novo != "Ver Imagem"
+        ):
             return True
         return False
 
