@@ -16,7 +16,8 @@
          class="{% if url_name == 'dashboard' %}ativo{% endif %}">
         <span class="ic">📊</span> Dashboard
       </a>
-      <a href="#" class="desabilitado">
+      <a href="{% url 'acessos:lista' %}"
+         class="{% if request.resolver_match.namespace == 'acessos' %}ativo{% endif %}">
         <span class="ic">🔍</span> Consultas
       </a>
       <a href="{% url 'importar_csv' %}"

@@ -7,3 +7,4 @@ dj-database-url==2.1.0
 pandas==2.2.2
 openpyxl==3.1.2
 djangorestframework-simplejwt==5.3.1
+django-filter==24.3

@@ -51,3 +51,12 @@ def top_dias(
         }
         for item in agregado
     ]
+
+def total_de_acessos(queryset: QuerySet[RegistroAcesso]) -> int:
+    """Total de registros no queryset informado.
+
+    Exemplo:
+        >>> total_de_acessos(RegistroAcesso.objects.filter(tipo_acesso="Entrada"))
+        1234
+    """
+    return queryset.count()
