@@ -2,7 +2,7 @@
 
 case "$1" in
     up)
-        docker compose up -d --build
+        docker compose up --build
         ;;
     migrate)
         docker compose exec web python manage.py migrate
