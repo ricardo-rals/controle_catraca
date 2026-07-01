@@ -18,6 +18,7 @@ class Importacao(models.Model):
     total_validos = models.IntegerField(default=0)
     total_invalidos = models.IntegerField(default=0)
     total_duplicados = models.IntegerField(default=0)
+    total_atualizados = models.IntegerField(default=0)
     usuario = models.ForeignKey(UsuarioSistema, on_delete=models.CASCADE)
 
     STATUS_CHOICES = [
