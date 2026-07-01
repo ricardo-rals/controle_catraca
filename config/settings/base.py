@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "apps.usuarios",
     "apps.importacoes",
     "apps.acessos",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [
