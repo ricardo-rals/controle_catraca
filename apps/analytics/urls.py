@@ -1,9 +1,8 @@
-"""Rotas do módulo analytics.
-
-As HUs 028-031 acrescentam entradas em `urlpatterns` — não precisa mexer no
-`config/urls.py`, o prefixo `api/analytics/` já está registrado lá.
-"""
+from django.urls import path
+from .views import PicosAnalyticsView
 
 app_name = "analytics"
 
-urlpatterns = []
+urlpatterns = [
+    path("picos/", PicosAnalyticsView.as_view(), name="picos"),
+]
