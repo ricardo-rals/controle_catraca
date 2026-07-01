@@ -13,7 +13,9 @@ class ListaAcessosView(LoginRequiredMixin, ListView):
     context_object_name = "registros"
 
     def get_queryset(self):
-        qs = RegistroAcesso.objects.select_related("ponto_acesso").order_by("-timestamp")
+        qs = RegistroAcesso.objects.select_related("ponto_acesso").order_by(
+            "-timestamp"
+        )
         self.filterset = RegistroAcessoFilter(self.request.GET or None, queryset=qs)
         return self.filterset.qs
 
