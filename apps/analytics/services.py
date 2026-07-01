@@ -52,6 +52,7 @@ def top_dias(
         for item in agregado
     ]
 
+
 def total_de_acessos(queryset: QuerySet[RegistroAcesso]) -> int:
     """Total de registros no queryset informado.
 
