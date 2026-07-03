@@ -1,0 +1,150 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block titulo %}Detalhes da importação{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/importacao.css' %}">
+{% endblock %}
+
+{% block page_content %}
+
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Importação / Detalhes</div>
+    <h1>
+      {% if importacao %}Detalhes da Importação #{{ importacao.id }}
+      {% else %}Detalhes da importação{% endif %}
+    </h1>
+  </div>
+  <div class="acoes">
+    <a href="{% url 'importar_csv' %}" class="btn-sec">↩ Nova importação</a>
+  </div>
+</div>
+
+<div class="import-grid">
+
+  <!-- Coluna esquerda: resumo + falhas -->
+  <div>
+    {% if importacao %}
+      <div class="card" style="margin-bottom:18px;">
+        <div class="cab">
+          <div>
+            <h3>Resumo</h3>
+            <div class="leg">
+              {{ importacao.nome_arquivo }} ·
+              {{ importacao.data_tentativa|date:"d/m/Y H:i" }}
+            </div>
+          </div>
+          <span class="status-pill status-{{ importacao.status|lower }}">
+            {{ importacao.get_status_display }}
+          </span>
+        </div>
+        <div class="resumo-import resumo-row">
+          <div class="li-resumo" style="flex:1">
+            <div class="nm ok-nm">✓</div>
+            <div class="tx"><b>{{ importacao.total_validos }}</b> válidas</div>
+          </div>
+          <div class="li-resumo" style="flex:1">
+            <div class="nm ok-nm">↻</div>
+            <div class="tx"><b>{{ importacao.total_atualizados }}</b> atualizadas</div>
+          </div>
+          <div class="li-resumo" style="flex:1">
+            <div class="nm inv-nm">!</div>
+            <div class="tx"><b>{{ importacao.total_invalidos }}</b> inválidas</div>
+          </div>
+          <div class="li-resumo" style="flex:1">
+            <div class="nm dup-nm">⊘</div>
+            <div class="tx"><b>{{ importacao.total_duplicados }}</b> duplicadas</div>
+          </div>
+        </div>
+      </div>
+
+      {% if falhas %}
+        <div class="tabela-card">
+          <div class="cab" style="padding:14px 18px;">
+            <div>
+              <h3>Linhas problemáticas</h3>
+              <div class="leg">{{ falhas|length }} ocorrência{{ falhas|length|pluralize:"s" }}</div>
+            </div>
+            <a href="{% url 'exportar_erros_csv' importacao.id %}" class="btn-sec">
+              ⬇ Baixar relatório de erros
+            </a>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:15%;">Linha</th>
+                <th>Motivo do erro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for falha in falhas %}
+                <tr>
+                  <td>{{ falha.linha_arquivo }}</td>
+                  <td>{{ falha.motivo_erro }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alerta alerta-success">
+          <strong>Tudo certo!</strong>
+          Nenhuma linha problemática foi registrada nesta importação.
+        </div>
+      {% endif %}
+
+    {% else %}
+      <p style="color:var(--cinza); font-size:13.5px; text-align:center; padding:32px 0;">
+        Selecione uma importação no histórico ao lado.
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Coluna direita: histórico de importações -->
+  <div class="card">
+    <div class="cab">
+      <div>
+        <h3>Histórico</h3>
+        <div class="leg">Todas as importações</div>
+      </div>
+    </div>
+
+    {% if importacoes %}
+      <div class="resumo-import">
+        {% for imp in importacoes %}
+          <a href="{% url 'dashboard_detalhe' imp.id %}"
+             class="li-resumo"
+             style="text-decoration:none; color:inherit;
+                    {% if importacao and importacao.id == imp.id %}background:var(--cinza-claro);{% endif %}">
+            <div class="nm
+              {% if imp.status == 'SUCESSO' %}ok-nm
+              {% elif imp.status == 'FALHA' %}inv-nm
+              {% else %}dup-nm{% endif %}">
+              {% if imp.status == "SUCESSO" %}✓
+              {% elif imp.status == "FALHA" %}!
+              {% else %}⏳{% endif %}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="hist-nome"
+                   style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                Importação #{{ imp.id }}
+              </div>
+              <div class="hist-meta">
+                {{ imp.data_tentativa|date:"d/m/Y H:i" }}
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color:var(--cinza); font-size:13.5px; text-align:center; padding:24px 0;">
+        Nenhuma importação registrada ainda.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

@@ -17,11 +17,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from apps.usuarios.views import dashboard
 
 urlpatterns = [
+    path("", dashboard, name="home"),  # rota raiz
     path("admin/", admin.site.urls),
     path("acessos/", include("apps.acessos.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("importacoes/", include("apps.importacoes.urls")),
+    path("acessos/", include("apps.acessos.urls")),
+    path("api/analytics/", include("apps.analytics.urls")),
+    path("dashboard/", dashboard, name="dashboard"),
     path("", include("apps.usuarios.urls")),
+    path("api/analytics/", include("apps.analytics.urls")),
 ]
