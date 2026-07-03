@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.http import JsonResponse
 from django.views import View
-
 from .models import Evento  # ajuste para o modelo real usado no queryset
 from .services import usuarios_frequentes
 
