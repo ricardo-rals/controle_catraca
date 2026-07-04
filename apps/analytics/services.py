@@ -65,35 +65,30 @@ def total_de_acessos(queryset: QuerySet[RegistroAcesso]) -> int:
 
 def fluxo_por_tipo(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, Any]]:
     """Agrupa os registros de acesso por tipo (Entrada / Saída).
- 
+
     Retorna uma lista de dicionários com 'tipo' e 'total', ordenada pelo tipo.
     """
     agregado = (
-        queryset
-        .values("tipo_acesso")
+        queryset.values("tipo_acesso")
         .annotate(total=Count("id"))
         .order_by("tipo_acesso")
     )
- 
-    return [
-        {"tipo": item["tipo_acesso"], "total": item["total"]}
-        for item in agregado
-    ]
- 
- 
+
+    return [{"tipo": item["tipo_acesso"], "total": item["total"]} for item in agregado]
+
+
 def fluxo_por_ponto(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, Any]]:
     """Agrupa os registros de acesso por ponto de acesso (nome da catraca).
- 
+
     Retorna uma lista de dicionários com 'ponto' e 'total',
     ordenada pelo nome do ponto.
     """
     agregado = (
-        queryset
-        .values("ponto_acesso__nome")
+        queryset.values("ponto_acesso__nome")
         .annotate(total=Count("id"))
         .order_by("ponto_acesso__nome")
     )
- 
+
     return [
         {"ponto": item["ponto_acesso__nome"], "total": item["total"]}
         for item in agregado
