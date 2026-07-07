@@ -24,6 +24,7 @@ from drf_spectacular.views import (SpectacularAPIView,SpectacularSwaggerView,)
 urlpatterns = [
     path("", dashboard, name="home"),  # rota raiz
     path("admin/", admin.site.urls),
+    path("acessos/", include("apps.acessos.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("importacoes/", include("apps.importacoes.urls")),
     path("acessos/", include("apps.acessos.urls")),
