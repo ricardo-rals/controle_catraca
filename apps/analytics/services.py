@@ -1,7 +1,30 @@
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, ExtractHour, TruncDate
+
 from typing import List, Dict, Any
 from django.db.models import Count, QuerySet
-from django.db.models.functions import ExtractHour, TruncDate
+
 from apps.acessos.models import RegistroAcesso
+
+def volume_por_periodo(queryset, granularidade: str) -> list[dict]: 
+    trunc_map = {
+        "dia": TruncDay("timestamp"), 
+        "semana": TruncWeek("timestamp"),
+        "mes": TruncMonth("timestamp"),
+    }
+
+    if granularidade not in trunc_map:
+        raise ValueError("Granularidade inválida. Use 'dia', 'semana' ou 'mes'.")
+
+    resultados = (
+        queryset
+        .annotate(periodo=trunc_map[granularidade])
+        .values("periodo")
+        .annotate(total=Count("id"))
+        .order_by("periodo")
+    )
+
+    return [{"periodo": linha["periodo"], "total": linha["total"]} for linha in resultados]
+
 
 def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
