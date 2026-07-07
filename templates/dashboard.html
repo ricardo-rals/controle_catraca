@@ -1,10 +1,123 @@
-{% extends "base.html" %}
+{% extends "base_app.html" %}
+{% load static %}
 
-{% block content %}
-<h1>Dashboard</h1>
-<p>Bem-vindo, {{ user.get_full_name|default:user.username }}.</p>
-<form method="post" action="{% url 'logout' %}">
-  {% csrf_token %}
-  <button type="submit">Sair</button>
-</form>
+{% block titulo %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block page_content %}
+
+<!-- Topbar -->
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Dashboard</div>
+    <h1>Visão Geral do Campus</h1>
+  </div>
+  <div class="acoes">
+    <button class="btn-sec">📅 {{ periodo_label|default:"Mês atual" }}</button>
+    <button class="btn-pri">📄 Exportar</button>
+  </div>
+</div>
+
+<!-- Filtros de período (funcionais com HTMX na HU-037) -->
+<div class="filtros">
+  <div class="chip-filtro ativo">Últimos 7 dias</div>
+  <div class="chip-filtro">Últimos 30 dias</div>
+  <div class="chip-filtro">Mês atual</div>
+  <div class="chip-filtro">Personalizado</div>
+</div>
+
+<!--
+  Valores reais dos KPIs e gráficos chegam nas HUs de analytics (027–036, Sprint 4).
+  Até lá os KPIs exibem "—" e os gráficos um estado vazio.
+-->
+
+<!-- KPIs -->
+<div class="kpis">
+  <div class="kpi v1">
+    <div class="ic-kpi">🚪</div>
+    <div class="valor">{{ total_acessos|default:"—" }}</div>
+    <div class="label">Total de acessos</div>
+    <div class="delta neutro">No período selecionado</div>
+  </div>
+  <div class="kpi v2">
+    <div class="ic-kpi">📈</div>
+    <div class="valor">{{ media_diaria|default:"—" }}</div>
+    <div class="label">Média diária</div>
+    <div class="delta neutro">No período selecionado</div>
+  </div>
+  <div class="kpi v3">
+    <div class="ic-kpi">⏰</div>
+    <div class="valor">{{ horario_pico|default:"—" }}</div>
+    <div class="label">Horário de pico</div>
+    <div class="delta neutro">Mais movimentado</div>
+  </div>
+  <div class="kpi v4">
+    <div class="ic-kpi">👤</div>
+    <div class="valor">{{ pessoas_unicas|default:"—" }}</div>
+    <div class="label">Pessoas únicas</div>
+    <div class="delta neutro">No período selecionado</div>
+  </div>
+</div>
+
+<!-- Gráficos -->
+<div class="grid-graficos">
+  <div class="card">
+    <div class="cab">
+      <div>
+        <h3>Acessos ao longo do tempo</h3>
+        <div class="leg">Volume diário no período selecionado</div>
+      </div>
+      <span class="badge">Por dia</span>
+    </div>
+    <!-- Eixos prontos; a série de dados é desenhada na HU-034 -->
+    <div class="grafico-wrap">
+      <svg class="linha-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+        <line x1="0" y1="45" x2="600" y2="45" stroke="#eef2f0" stroke-width="1"/>
+        <line x1="0" y1="90" x2="600" y2="90" stroke="#eef2f0" stroke-width="1"/>
+        <line x1="0" y1="135" x2="600" y2="135" stroke="#eef2f0" stroke-width="1"/>
+      </svg>
+      <div class="sem-dados">Sem dados para o período</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cinza);margin-top:8px;">
+      <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cab">
+      <div>
+        <h3>Fluxo por perfil</h3>
+        <div class="leg">Composição dos acessos</div>
+      </div>
+    </div>
+    <!-- Anel vazio; os segmentos são preenchidos na HU-036 -->
+    <div class="donut-wrap">
+      <svg width="130" height="130" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#eef2f0" stroke-width="6"/>
+        <text x="21" y="23" text-anchor="middle" font-size="6" font-weight="700" font-family="Sora" fill="#5d6b64">—</text>
+      </svg>
+      <div class="legenda-donut">
+        <div class="item"><span class="pnt" style="background:#0a7d4d"></span> Estudantes <span class="pct">—</span></div>
+        <div class="item"><span class="pnt" style="background:#2d7dd2"></span> Servidores <span class="pct">—</span></div>
+        <div class="item"><span class="pnt" style="background:#f5a623"></span> Visitantes <span class="pct">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card barras-wrap">
+  <div class="cab">
+    <div>
+      <h3>Horários de maior fluxo</h3>
+      <div class="leg">Distribuição de acessos por hora do dia</div>
+    </div>
+    <span class="badge">Por hora</span>
+  </div>
+  <!-- As barras são geradas a partir dos dados reais na HU-035 -->
+  <div class="barras-vazio">Sem dados para o período</div>
+</div>
+
 {% endblock %}

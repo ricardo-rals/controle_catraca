@@ -1,0 +1,126 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block titulo %}Novo usuário{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}">
+{% endblock %}
+
+{% block page_content %}
+
+<!-- Topbar -->
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Administração / Usuários / Novo</div>
+    <h1>Novo usuário</h1>
+  </div>
+  <div class="acoes">
+    <a href="{% url 'listar_usuarios' %}" class="btn-sec">← Voltar à listagem</a>
+  </div>
+</div>
+
+<!-- Card de criação -->
+<div class="card" style="max-width:720px;">
+  <div class="cab">
+    <div>
+      <div class="secao-titulo">Preencha os dados</div>
+      <div class="secao-sub">O usuário receberá acesso ao sistema com o perfil selecionado.</div>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="erros-form">
+      {% for erro in form.non_field_errors %}
+        <p>{{ erro }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-grid-2">
+      <div class="campo" style="margin-bottom:0;">
+        <label for="id_username">Nome de usuário</label>
+        <input
+          type="text"
+          name="username"
+          id="id_username"
+          placeholder="ex: joao.silva"
+          value="{{ form.username.value|default:'' }}"
+          autofocus
+        >
+        {% if form.username.errors %}
+          <div class="erros-form" style="margin-top:6px;">
+            {% for e in form.username.errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="campo" style="margin-bottom:0;">
+        <label for="id_email">E-mail institucional</label>
+        <input
+          type="email"
+          name="email"
+          id="id_email"
+          placeholder="nome@ifba.edu.br"
+          value="{{ form.email.value|default:'' }}"
+        >
+        {% if form.email.errors %}
+          <div class="erros-form" style="margin-top:6px;">
+            {% for e in form.email.errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="campo" style="margin-bottom:0;">
+        <label for="id_senha">Senha</label>
+        <input
+          type="password"
+          name="senha"
+          id="id_senha"
+          placeholder="Mínimo 8 caracteres, 1 número, 1 maiúscula"
+        >
+        {% if form.senha.errors %}
+          <div class="erros-form" style="margin-top:6px;">
+            {% for e in form.senha.errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="campo" style="margin-bottom:0;">
+        <label for="id_confirmar_senha">Confirmar senha</label>
+        <input
+          type="password"
+          name="confirmar_senha"
+          id="id_confirmar_senha"
+          placeholder="Repita a senha"
+        >
+        {% if form.confirmar_senha.errors %}
+          <div class="erros-form" style="margin-top:6px;">
+            {% for e in form.confirmar_senha.errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="campo" style="margin-top:14px;">
+      <label for="id_perfil">Perfil de acesso</label>
+      <select name="perfil" id="id_perfil">
+        {% for value, label in form.fields.perfil.choices %}
+          <option value="{{ value }}"
+            {% if form.perfil.value == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn-pri" style="margin-top:8px;">
+      Criar usuário
+    </button>
+  </form>
+</div>
+
+{% endblock %}
