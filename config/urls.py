@@ -18,6 +18,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from apps.usuarios.views import dashboard
+from drf_spectacular.views import (SpectacularAPIView,SpectacularSwaggerView,)
+
 
 urlpatterns = [
     path("", dashboard, name="home"),  # rota raiz
@@ -29,4 +31,8 @@ urlpatterns = [
     path("api/analytics/", include("apps.analytics.urls")),
     path("dashboard/", dashboard, name="dashboard"),
     path("", include("apps.usuarios.urls")),
+    path("api/",include("apps.acessos.api_urls")),
+    path("api/schema/",SpectacularAPIView.as_view(),name="schema",),
+    path("api/schema/swagger-ui/",SpectacularSwaggerView.as_view(url_name="schema"),name="swagger-ui",),
+    
 ]

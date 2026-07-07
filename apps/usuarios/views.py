@@ -65,7 +65,6 @@ def criar_usuario(request):
             usuario.set_password(form.cleaned_data["senha"])
 
             usuario.save()
-
             return redirect("listar_usuarios")
 
     else:
