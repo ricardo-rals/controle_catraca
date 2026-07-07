@@ -13,8 +13,7 @@ Uso (sem main.py):
 """
 
 import hashlib
-
-# CORREÇÃO: Biblioteca hmac removida, pois não usaremos mais hash irreversível.
+import hmac
 import os
 import csv
 import json
@@ -25,7 +24,10 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from datetime import datetime, timezone
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+# Observação: o AES (cryptography) só é usado nas funções reversíveis de
+# auditoria abaixo. O pipeline de importação usa pseudonimização determinística
+# (HMAC-SHA256, stdlib), então o import do AESGCM é feito sob demanda dentro
+# das funções que o usam — assim o módulo carrega mesmo sem a lib instalada.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,12 +42,24 @@ logger = logging.getLogger(__name__)
 
 
 def _obter_salt() -> bytes:
-    """Obtém o salt da variável de ambiente PSEUDONIMIZACAO_SALT."""
+    """
+    Obtém o salt de PSEUDONIMIZACAO_SALT.
+
+    Procura primeiro na variável de ambiente (útil no Docker e na execução
+    standalone) e, se ausente, no Django settings (que lê o .env via decouple).
+    """
     salt = os.environ.get("PSEUDONIMIZACAO_SALT", "").strip()
     if not salt:
+        try:
+            from django.conf import settings
+
+            salt = (getattr(settings, "PSEUDONIMIZACAO_SALT", "") or "").strip()
+        except Exception:
+            salt = ""
+    if not salt:
         raise EnvironmentError(
-            "Variável de ambiente PSEUDONIMIZACAO_SALT não definida ou vazia.\n"
-            "Exemplo: export PSEUDONIMIZACAO_SALT='seu_salt_secreto'"
+            "PSEUDONIMIZACAO_SALT não definida (nem no ambiente nem no settings).\n"
+            "Defina no .env: PSEUDONIMIZACAO_SALT='seu_salt_secreto'"
         )
     return salt.encode("utf-8")
 
@@ -56,6 +70,28 @@ def _obter_chave_aes() -> bytes:
     A chave nunca é armazenada — gerada na hora a partir do salt.
     """
     return hashlib.sha256(_obter_salt()).digest()  # 32 bytes = AES-256
+
+
+# ---------------------------------------------------------------------------
+# HU-020: pseudônimo DETERMINÍSTICO do identificador (credencial/matrícula)
+# ---------------------------------------------------------------------------
+
+
+def pseudonimizar_identificador(valor: str) -> str:
+    """
+    Gera o identificador pseudonimizado da credencial/matrícula via
+    HMAC-SHA256(valor, PSEUDONIMIZACAO_SALT).
+
+    Determinístico por design: a mesma credencial sempre produz o mesmo
+    hash, permitindo cruzar acessos da mesma pessoa (HU-020 critério 3) e
+    deduplicar registros (HU-019). Irreversível — usado como chave de
+    dedup, nunca para recuperar a credencial original.
+    """
+    if not valor or not str(valor).strip():
+        return valor
+    return hmac.new(
+        _obter_salt(), str(valor).strip().encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +106,8 @@ def criptografar_valor(valor: str) -> str:
     """
     if not valor or not str(valor).strip():
         return valor
+
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
     chave = _obter_chave_aes()
     aesgcm = AESGCM(chave)
@@ -86,6 +124,8 @@ def descriptografar_valor(valor_cifrado: str) -> str:
         return valor_cifrado
 
     try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
         dados = base64.b64decode(valor_cifrado.encode("utf-8"))
         nonce = dados[:12]
         cifrado = dados[12:]

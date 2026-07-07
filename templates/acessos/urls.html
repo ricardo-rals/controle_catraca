@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="detalhe-acesso">
+    <h1>Detalhe do Registro de Acesso</h1>
+
+    <dl>
+        <dt>Identificador</dt>
+        <dd>{{ registro.identificador_pseudonimizado|truncatechars:12 }}</dd>
+
+        <dt>Data/Hora</dt>
+        <dd>{{ registro.timestamp }}</dd>
+
+        <dt>Ponto de Acesso</dt>
+        <dd>{{ registro.ponto_acesso.nome|default:"—" }}</dd>
+
+        <dt>Grupo</dt>
+        <dd>{{ registro.ponto_acesso.grupo_equipamento|default:"—" }}</dd>
+
+        <dt>Direção</dt>
+        <dd>{{ registro.get_tipo_acesso_display|default:"—" }}</dd>
+
+        <dt>Evento</dt>
+        <dd>{{ registro.evento|default:"—" }}</dd>
+
+        <dt>Área de Origem</dt>
+        <dd>{{ registro.area_origem|default:"—" }}</dd>
+
+        <dt>Área de Destino</dt>
+        <dd>{{ registro.area_destino|default:"—" }}</dd>
+
+        <dt>Tipo de Consulta</dt>
+        <dd>{{ registro.tipo_consulta|default:"—" }}</dd>
+
+        <dt>Importação de Origem</dt>
+        <dd>{{ registro.importacao }}</dd>
+    </dl>
+
+    {# A listagem ainda não existe/funciona (ver TODO em views.py). Enquanto #}
+    {# isso, usamos o HTTP_REFERER (guardado na view via request.META) para #}
+    {# voltar à página anterior preservando os filtros que estavam na URL. #}
+    <a href="{{ voltar_url }}">Voltar</a>
+</div>
+{% endblock %}
