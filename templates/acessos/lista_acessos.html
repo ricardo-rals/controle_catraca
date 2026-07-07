@@ -39,6 +39,7 @@
     </div>
   </form>
 
+   <p>Total de registros: {{page_obj.paginator.count}}</p> 
   <div class="tabela-card">
     <table>
       <thead>
@@ -76,5 +77,23 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <div class="paginacao">
+  {% if page_obj.has_previous %}
+    <a href="?{{ request.GET.urlencode|cut:'page=' }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+
+  {% endif %}
+
+  <span class="nums">
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+  </span>
+
+  {% if page_obj.has_next %}
+    <a href="?{{ request.GET.urlencode|cut:'page=' }}&page={{ page_obj.next_page_number }}">Próxima</a>
+
+  {% endif %}
+</div>
+
+
   </div>
 {% endblock %}

@@ -11,6 +11,7 @@ class ListaAcessosView(LoginRequiredMixin, ListView):
     model = RegistroAcesso
     template_name = "acessos/lista_acessos.html"
     context_object_name = "registros"
+    paginate_by = 50
 
     def get_queryset(self):
         qs = RegistroAcesso.objects.select_related("ponto_acesso").order_by(
