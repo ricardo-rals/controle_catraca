@@ -3,9 +3,7 @@ from rest_framework import serializers
 from .models import RegistroAcesso
 
 
-class RegistroAcessoSerializer(
-    serializers.ModelSerializer
-):
+class RegistroAcessoSerializer(serializers.ModelSerializer):
 
     ponto_acesso = serializers.StringRelatedField()
 

@@ -190,6 +190,21 @@ class ImportacaoService:
             .to_dict()
         )
 
+        # Preenche o grupo em equipamentos criados por importações antigas,
+        # que nasceram sem essa informação (reimportar o xlsx corrige o dado).
+        pontos_para_atualizar = []
+        for ponto in pontos_db:
+            grupo = grupo_por_equipamento.get(ponto.nome)
+            if grupo and not ponto.grupo_equipamento:
+                ponto.grupo_equipamento = grupo
+                if ponto.localizacao == ponto.nome:
+                    ponto.localizacao = grupo
+                pontos_para_atualizar.append(ponto)
+        if pontos_para_atualizar:
+            PontoAcesso.objects.bulk_update(
+                pontos_para_atualizar, ["grupo_equipamento", "localizacao"]
+            )
+
         pontos_faltantes = set(nomes_pontos) - set(mapa_pontos.keys())
         for nome_ponto in pontos_faltantes:
             if str(nome_ponto).strip():
