@@ -1,9 +1,12 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
+from .views import FrequentesView
+
 
 urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("frequentes/", FrequentesView.as_view(), name="frequentes"),
     path("usuarios/novo/", views.criar_usuario, name="criar_usuario"),
     path(
         "usuarios/<int:usuario_id>/desativar/",

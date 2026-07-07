@@ -3,6 +3,16 @@ from django.db.models import Count, QuerySet
 from django.db.models.functions import ExtractHour, TruncDate
 from apps.acessos.models import RegistroAcesso
 
+def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
+    """
+    Agrupa os registros por identificador_pseudonimizado e retorna os
+    usuarios com maior numero de ocorrencias no periodo informado.
+
+    Nunca resolve o identificador para nome/credencial - trabalha
+    apenas com o hash ja armazenado, preservando a privacidade.
+    """
+    resultados = (
+        queryset.values("identificador_pseudonimizado")
 
 def picos_por_hora(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, int]]:
     """
@@ -45,6 +55,8 @@ def top_dias(
     )
 
     return [
+        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
+        for item in resultados
         {
             "dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None,
             "total": item["total"],
