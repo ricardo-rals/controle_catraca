@@ -36,6 +36,7 @@ def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
     resultados = (
         queryset.values("identificador_pseudonimizado")
+    )
 
 def picos_por_hora(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, int]]:
     """
@@ -77,14 +78,17 @@ def top_dias(
         .order_by("-total")[:limite]
     )
 
+    #corrigir abaixo:
     return [
-        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
+       """ 
+       {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
         for item in resultados
         {
             "dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None,
             "total": item["total"],
         }
         for item in agregado
+        """
     ]
 
 
