@@ -23,6 +23,7 @@ from apps.analytics.services import (
     fluxo_por_ponto,
 )
 
+
 class VolumePorPeriodoView(APIView):
     def get(self, request):
         granularidade = request.query_params.get("granularidade", "dia")
@@ -32,10 +33,10 @@ class VolumePorPeriodoView(APIView):
         queryset = RegistroAcesso.objects.all()
 
         if data_inicio:
-            inicio_parsed = parse_datetime(data_inicio) 
+            inicio_parsed = parse_datetime(data_inicio)
             if inicio_parsed:
                 queryset = queryset.filter(timestamp__gte=inicio_parsed)
-                
+
         if data_fim:
             fim_parsed = parse_datetime(data_fim)
             if fim_parsed:
@@ -94,6 +95,7 @@ class FrequentesView(View):
             return datetime.strptime(valor, "%Y-%m-%d").date()
         except ValueError:
             return None
+
 
 class PicosAnalyticsView(View):
     def get(self, request, *args, **kwargs):

@@ -8,9 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.generics import ListAPIView
 
-from .filters import RegistroAcessoFilter
-from .models import RegistroAcesso
 from .serializers import RegistroAcessoSerializer
+
 
 class ListaAcessosView(LoginRequiredMixin, ListView):
     """Listagem de RegistroAcesso com filtros combináveis (HU-023)."""
@@ -30,11 +29,13 @@ class ListaAcessosView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["filter"] = self.filterset
         return ctx
-    
+
 
 class RegistroAcessoListAPIView(ListAPIView):
 
-    queryset = RegistroAcesso.objects.select_related("ponto_acesso").order_by("-timestamp")
+    queryset = RegistroAcesso.objects.select_related("ponto_acesso").order_by(
+        "-timestamp"
+    )
 
     serializer_class = RegistroAcessoSerializer
 

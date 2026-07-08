@@ -102,7 +102,12 @@ def reativar_usuario(request, usuario_id):
 
 @login_required
 def dashboard(request):
-    return render(request, "dashboard.html")
+    from apps.analytics.services import picos_por_hora
+    from apps.acessos.models import RegistroAcesso
+
+    queryset = RegistroAcesso.objects.all()
+    picos_hora = picos_por_hora(queryset)
+    return render(request, "dashboard.html", {"picos_hora": picos_hora})
 
 
 @login_required
