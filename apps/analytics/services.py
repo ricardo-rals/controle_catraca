@@ -25,7 +25,7 @@ def volume_por_periodo(queryset, granularidade: str) -> list[dict]:
 
     return [{"periodo": linha["periodo"], "total": linha["total"]} for linha in resultados]
 
-
+#CONCERTAR GAMBIARRA ABAIXO
 def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
     Agrupa os registros por identificador_pseudonimizado e retorna os
@@ -36,7 +36,14 @@ def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
     resultados = (
         queryset.values("identificador_pseudonimizado")
+        .annotate(total=Count("id"))
+        .order_by("-total")[:limite]
     )
+    return [
+        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
+        for item in resultados
+    ]
+
 
 def picos_por_hora(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, int]]:
     """
@@ -77,19 +84,9 @@ def top_dias(
         .annotate(total=Count("id"))
         .order_by("-total")[:limite]
     )
-
-    #corrigir abaixo:
-    return [
-       """ 
-       {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
-        for item in resultados
-        {
-            "dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None,
-            "total": item["total"],
-        }
-        for item in agregado
-        """
-    ]
+    #CONCERTAR GAMBIARRA ABAIXO
+    return [{"dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None, "total": item["total"]}
+        for item in agregado]
 
 
 def total_de_acessos(queryset: QuerySet[RegistroAcesso]) -> int:
