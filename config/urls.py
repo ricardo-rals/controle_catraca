@@ -27,6 +27,7 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("importacoes/", include("apps.importacoes.urls")),
     path("acessos/", include("apps.acessos.urls")),
+    path("relatorios/", include("apps.relatorios.urls")),
     path("api/analytics/", include("apps.analytics.urls")),
     path("api/", include("apps.acessos.api_urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
