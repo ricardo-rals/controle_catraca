@@ -1,9 +1,14 @@
+from datetime import timedelta
+
 from django.shortcuts import render
+from django.utils import timezone
+from django.utils.dateparse import parse_date
 from .models import UsuarioSistema
 from django.shortcuts import redirect
 from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
+from apps.acessos.models import RegistroAcesso
 from django.views.generic import ListView
 from .mixins import PerfilRequeridoMixin, perfil_requerido
 from django.contrib.auth.views import LoginView
@@ -100,22 +105,52 @@ def reativar_usuario(request, usuario_id):
     return redirect("listar_usuarios")
 
 
-@login_required
-def dashboard(request):
-    """Dashboard — primeira tela após login (HU-032, base do dashboard).
+def _intervalo_do_periodo(request):
+    """Lê data_inicio/data_fim (YYYY-MM-DD) da querystring → (data_inicio, data_fim).
 
-    Aqui só montamos o esqueleto: o contexto abaixo começa vazio (None), então
-    os KPIs mostram "—" e os gráficos ficam "sem dados". Cada HU preenche a
-    sua chave depois — não renomeie nem remova as outras.
+    Os presets (7 dias, 30 dias, mês atual) são atalhos no front que só
+    preenchem esses dois campos; o servidor sempre filtra por intervalo de datas.
+    Sem nenhum dos dois (primeira visita) → últimos 30 dias, para o dashboard
+    já abrir com um recorte útil e os campos preenchidos.
+    """
+    hoje = timezone.localdate()
+    data_inicio = parse_date(request.GET.get("data_inicio") or "")
+    data_fim = parse_date(request.GET.get("data_fim") or "")
+    if not data_inicio and not data_fim:
+        return hoje - timedelta(days=29), hoje
+    # Nunca depois de hoje (protege contra datas futuras vindas da URL).
+    if data_inicio and data_inicio > hoje:
+        data_inicio = hoje
+    if data_fim and data_fim > hoje:
+        data_fim = hoje
+    return data_inicio, data_fim
 
+
+def _contexto_dashboard(request):
+    """Contexto compartilhado pelo dashboard (carga inicial) e pelo fragmento
+    HTMX. Aplica o filtro de período e deixa as chaves de KPI/gráfico prontas
+    (None) para as HUs 033–036 preencherem — elas calculam a partir de
+    `queryset`, que já vem recortado pelo período.
+
+    Contrato de contexto (preencha a sua chave, não renomeie as outras):
       - total_acessos, media_diaria, horario_pico, pessoas_unicas  → KPIs (HU-033)
       - serie_volume  → gráfico de acessos ao longo do tempo (HU-034)
       - picos_hora    → gráfico de horários de pico (HU-035)
       - fluxo_tipo, fluxo_ponto  → gráficos de fluxo (HU-036)
-      - periodo_label → rótulo do período, ex. "Mês atual" (HU-037)
     """
-    contexto = {
-        "periodo_label": "Mês atual",
+    data_inicio, data_fim = _intervalo_do_periodo(request)
+
+    queryset = RegistroAcesso.objects.all()
+    if data_inicio:
+        queryset = queryset.filter(timestamp__date__gte=data_inicio)
+    if data_fim:
+        queryset = queryset.filter(timestamp__date__lte=data_fim)
+
+    return {
+        "queryset": queryset,  # base já filtrada para as HUs 033–036
+        "data_inicio": data_inicio.isoformat() if data_inicio else "",
+        "data_fim": data_fim.isoformat() if data_fim else "",
+        "hoje": timezone.localdate().isoformat(),  # limite máximo dos campos de data
         "total_acessos": None,
         "media_diaria": None,
         "horario_pico": None,
@@ -125,6 +160,19 @@ def dashboard(request):
         "fluxo_tipo": None,
         "fluxo_ponto": None,
     }
+
+
+@login_required
+def dashboard(request):
+    """Dashboard — primeira tela após login (HU-032/037).
+
+    Numa requisição normal devolve a página inteira. Numa requisição HTMX
+    (header HX-Request, disparada pelos filtros de período) devolve só o
+    fragmento dos widgets, trocado dentro de #dashboard-widgets sem recarregar.
+    """
+    contexto = _contexto_dashboard(request)
+    if request.headers.get("HX-Request"):
+        return render(request, "partials/dashboard_widgets.html", contexto)
     return render(request, "dashboard.html", contexto)
 
 
