@@ -7,6 +7,16 @@
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<!--
+  Chart.js e HTMX carregados só no dashboard (não em toda página).
+  Sem defer de propósito: os scripts de gráfico das HUs 034/035/036 vão
+  neste mesmo bloco, depois destas tags, e precisam do `Chart` já disponível.
+-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}
+
 {% block page_content %}
 
 <!-- Topbar -->
@@ -32,7 +42,11 @@
 <!--
   Valores reais dos KPIs e gráficos chegam nas HUs de analytics (027–036, Sprint 4).
   Até lá os KPIs exibem "—" e os gráficos um estado vazio.
+
+  Bloco de widgets: a HU-037 extrai este trecho para um partial reutilizável e
+  usa `#dashboard-widgets` como alvo do hx-get (troca só os widgets, não o layout).
 -->
+<div id="dashboard-widgets">
 
 <!-- KPIs -->
 <div class="kpis">
@@ -119,5 +133,7 @@
   <!-- As barras são geradas a partir dos dados reais na HU-035 -->
   <div class="barras-vazio">Sem dados para o período</div>
 </div>
+
+</div><!-- /#dashboard-widgets -->
 
 {% endblock %}

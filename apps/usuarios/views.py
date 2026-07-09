@@ -102,7 +102,30 @@ def reativar_usuario(request, usuario_id):
 
 @login_required
 def dashboard(request):
-    return render(request, "dashboard.html")
+    """Dashboard — primeira tela após login (HU-032, base do dashboard).
+
+    Aqui só montamos o esqueleto: o contexto abaixo começa vazio (None), então
+    os KPIs mostram "—" e os gráficos ficam "sem dados". Cada HU preenche a
+    sua chave depois — não renomeie nem remova as outras.
+
+      - total_acessos, media_diaria, horario_pico, pessoas_unicas  → KPIs (HU-033)
+      - serie_volume  → gráfico de acessos ao longo do tempo (HU-034)
+      - picos_hora    → gráfico de horários de pico (HU-035)
+      - fluxo_tipo, fluxo_ponto  → gráficos de fluxo (HU-036)
+      - periodo_label → rótulo do período, ex. "Mês atual" (HU-037)
+    """
+    contexto = {
+        "periodo_label": "Mês atual",
+        "total_acessos": None,
+        "media_diaria": None,
+        "horario_pico": None,
+        "pessoas_unicas": None,
+        "serie_volume": None,
+        "picos_hora": None,
+        "fluxo_tipo": None,
+        "fluxo_ponto": None,
+    }
+    return render(request, "dashboard.html", contexto)
 
 
 @login_required
