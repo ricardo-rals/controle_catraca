@@ -25,6 +25,55 @@
 .chip-filtro.ativo { background: var(--verde); border-color: var(--verde); color: #fff; }
 .chip-filtro:hover:not(.ativo) { border-color: var(--verde); color: var(--verde); }
 
+/* Barra de filtros: presets à esquerda, intervalo de datas à direita */
+.filtros-bar {
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  background: #fff;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.filtros-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.filtros-datas {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.campo-data { display: flex; flex-direction: column; gap: 6px; }
+.campo-data label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--cinza);
+}
+.filtros-datas input[type="date"] {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--tinta);
+  border: 1.5px solid var(--linha);
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.filtros-datas input[type="date"]:hover { border-color: #c9d3ce; }
+.filtros-datas input[type="date"]:focus {
+  border-color: var(--verde);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 125, 77, .12);
+}
+.filtros-datas .btn-pri { padding: 10px 22px; }
+
+@media (max-width: 720px) {
+  .filtros-bar { flex-direction: column; align-items: stretch; }
+  .filtros-datas { justify-content: space-between; }
+}
+
 /* KPIs */
 .kpis {
   display: grid;

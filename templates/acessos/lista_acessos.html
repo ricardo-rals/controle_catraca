@@ -11,7 +11,7 @@
     </div>
   </div>
 
-  <form method="get" class="card" style="margin-bottom:18px; padding:18px 22px;">
+  <form method="get" class="card filtros-form" style="margin-bottom:18px; padding:18px 22px;">
     <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px; align-items:end;">
       <div class="campo" style="margin:0;">
         <label for="id_identificador">Identificador</label>
@@ -53,7 +53,8 @@
       </thead>
       <tbody>
         {% for registro in registros %}
-          <tr>
+          <tr onclick="window.location='{% url 'acessos:detalhe' registro.pk %}'"
+              style="cursor:pointer;">
             <td>{{ registro.timestamp|date:"d/m/Y H:i:s" }}</td>
             <td class="id-mono">{{ registro.identificador_pseudonimizado|slice:":12" }}…</td>
             <td>{{ registro.ponto_acesso.nome|default:"—" }}</td>
@@ -79,20 +80,18 @@
     </table>
 
     <div class="paginacao">
-  {% if page_obj.has_previous %}
-    <a href="?{{ request.GET.urlencode|cut:'page=' }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+      {% endif %}
 
-  {% endif %}
+      <span class="nums">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
 
-  <span class="nums">
-    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-  </span>
-
-  {% if page_obj.has_next %}
-    <a href="?{{ request.GET.urlencode|cut:'page=' }}&page={{ page_obj.next_page_number }}">Próxima</a>
-
-  {% endif %}
-</div>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Próxima</a>
+      {% endif %}
+    </div>
 
 
   </div>

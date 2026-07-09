@@ -1,13 +1,32 @@
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, ExtractHour, TruncDate
+"""Serviço central de métricas analíticas (HU-027).
 
-from typing import List, Dict, Any
+Contrato comum das funções deste módulo:
+
+1. Cada função recebe um QuerySet de RegistroAcesso já filtrado pela view.
+   A view é responsável por aplicar recorte de datas, permissão, etc.
+2. Nenhuma função consulta o banco "do zero" nem aplica filtro de data.
+3. O retorno é sempre uma estrutura serializável (int, dict, list[dict]),
+   pronto para virar JSON no endpoint.
+4. Sem side-effects: as funções são puras, testáveis com factory.
+"""
+
+from typing import Any, Dict, List
+
 from django.db.models import Count, QuerySet
+from django.db.models.functions import (
+    ExtractHour,
+    TruncDate,
+    TruncDay,
+    TruncMonth,
+    TruncWeek,
+)
 
 from apps.acessos.models import RegistroAcesso
 
-def volume_por_periodo(queryset, granularidade: str) -> list[dict]: 
+
+def volume_por_periodo(queryset, granularidade: str) -> list[dict]:
     trunc_map = {
-        "dia": TruncDay("timestamp"), 
+        "dia": TruncDay("timestamp"),
         "semana": TruncWeek("timestamp"),
         "mes": TruncMonth("timestamp"),
     }
@@ -16,14 +35,15 @@ def volume_por_periodo(queryset, granularidade: str) -> list[dict]:
         raise ValueError("Granularidade inválida. Use 'dia', 'semana' ou 'mes'.")
 
     resultados = (
-        queryset
-        .annotate(periodo=trunc_map[granularidade])
+        queryset.annotate(periodo=trunc_map[granularidade])
         .values("periodo")
         .annotate(total=Count("id"))
         .order_by("periodo")
     )
 
-    return [{"periodo": linha["periodo"], "total": linha["total"]} for linha in resultados]
+    return [
+        {"periodo": linha["periodo"], "total": linha["total"]} for linha in resultados
+    ]
 
 
 def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
@@ -36,6 +56,15 @@ def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
     resultados = (
         queryset.values("identificador_pseudonimizado")
+        .annotate(total=Count("id"))
+        .order_by("-total")[:limite]
+    )
+
+    return [
+        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
+        for item in resultados
+    ]
+
 
 def picos_por_hora(queryset: QuerySet[RegistroAcesso]) -> List[Dict[str, int]]:
     """
@@ -78,8 +107,6 @@ def top_dias(
     )
 
     return [
-        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
-        for item in resultados
         {
             "dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None,
             "total": item["total"],
