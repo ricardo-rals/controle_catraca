@@ -5,9 +5,28 @@ from django.db.models.functions import (
     ExtractHour,
     TruncDate,
 )
+"""Serviço central de métricas analíticas (HU-027).
 
-from typing import List, Dict, Any
+Contrato comum das funções deste módulo:
+
+1. Cada função recebe um QuerySet de RegistroAcesso já filtrado pela view.
+   A view é responsável por aplicar recorte de datas, permissão, etc.
+2. Nenhuma função consulta o banco "do zero" nem aplica filtro de data.
+3. O retorno é sempre uma estrutura serializável (int, dict, list[dict]),
+   pronto para virar JSON no endpoint.
+4. Sem side-effects: as funções são puras, testáveis com factory.
+"""
+
+from typing import Any, Dict, List
+
 from django.db.models import Count, QuerySet
+from django.db.models.functions import (
+    ExtractHour,
+    TruncDate,
+    TruncDay,
+    TruncMonth,
+    TruncWeek,
+)
 
 from apps.acessos.models import RegistroAcesso
 
@@ -48,6 +67,7 @@ def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
         .annotate(total=Count("id"))
         .order_by("-total")[:limite]
     )
+
     return [
         {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
         for item in resultados

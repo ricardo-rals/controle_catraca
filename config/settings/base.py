@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.importacoes",
     "apps.acessos",
     "apps.analytics",
+    "apps.relatorios",
     "drf_spectacular",
 ]
 
