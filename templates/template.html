@@ -1,0 +1,18 @@
+
+{# dashboard/templates/dashboard/volume.html #}
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <h2>Evolução de Volume</h2>
+    <canvas id="graficoVolume"></canvas>
+</div>
+
+{# Dados servidos de forma segura contra XSS #}
+{{ dados_volume|json_script:"dados-volume" }}
+{{ granularidade|json_script:"granularidade-volume" }}
+
+<script src="{% static 'dashboard/vendor/chart.min.js' %}"></script>
+<script src="{% static 'dashboard/js/grafico-volume.js' %}"></script>
+{% endblock %}
