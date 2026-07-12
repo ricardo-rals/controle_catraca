@@ -102,8 +102,60 @@
   </form>
 </div>
 
+<div class="card barras-wrap">
+  <div class="cab">
+    <div>
+      <h3>Horários de maior fluxo</h3>
+      <div class="leg">Distribuição de acessos por hora do dia</div>
+    </div>
+    <span class="badge">Por hora</span>
+  </div>
+  <!-- As barras são geradas a partir dos dados reais na HU-035 -->
+  {{ picos_hora|json_script:"dados-grafico-picos" }}
+  <div style="position: relative; width: 100%; height: 300px; padding: 16px;">
+      <canvas id="graficoPicos"></canvas>
+  </div>
 <div id="dashboard-widgets">
   {% include "partials/dashboard_widgets.html" %}
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const tagDados = document.getElementById('dados-grafico-picos');
+    if (tagDados && tagDados.textContent) {
+        const rawDados = JSON.parse(tagDados.textContent);
+        if (Array.isArray(rawDados) && rawDados.length > 0) {
+            
+            // Map the raw data [{"hora": 0, "total": 5}, ...] to labels and totals
+            const labels = rawDados.map(d => String(d.hora).padStart(2, '0') + 'h');
+            const totals = rawDados.map(d => d.total);
+
+            const maxValor = Math.max(...totals);
+            const coresBarras = totals.map(valor => valor === maxValor ? '#E53935' : '#1E88E5');
+            
+            const ctx = document.getElementById('graficoPicos').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume de Acessos',
+                        data: totals,
+                        backgroundColor: coresBarras,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    }
+});
+</script>
 
 {% endblock %}

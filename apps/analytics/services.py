@@ -1,3 +1,10 @@
+from django.db.models.functions import (
+    TruncDay,
+    TruncWeek,
+    TruncMonth,
+    ExtractHour,
+    TruncDate,
+)
 """Serviço central de métricas analíticas (HU-027).
 
 Contrato comum das funções deste módulo:
@@ -46,6 +53,7 @@ def volume_por_periodo(queryset, granularidade: str) -> list[dict]:
     ]
 
 
+# CONCERTAR GAMBIARRA ABAIXO
 def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
     Agrupa os registros por identificador_pseudonimizado e retorna os
@@ -105,7 +113,7 @@ def top_dias(
         .annotate(total=Count("id"))
         .order_by("-total")[:limite]
     )
-
+    # CONCERTAR GAMBIARRA ABAIXO
     return [
         {
             "dia": item["dia"].strftime("%Y-%m-%d") if item["dia"] else None,
