@@ -1,10 +1,10 @@
 from django.urls import path
-
-from . import views
+from .views import RelatoriosView, relatorio_pdf, relatorio_excel
 
 app_name = "relatorios"
 
 urlpatterns = [
-    path("pdf/", views.relatorio_pdf, name="pdf"),
-    path("excel/", views.relatorio_excel,name="excel"),
+    path("", RelatoriosView.as_view(), name="relatorios"),
+    path("pdf/", relatorio_pdf, name="relatorio_pdf"),
+    path("excel/", relatorio_excel, name="relatorio_excel"),
 ]
