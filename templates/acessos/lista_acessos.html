@@ -1,0 +1,98 @@
+{% extends "base_app.html" %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">Início / Consultas</div>
+      <h1>Registros de Acesso</h1>
+    </div>
+    <div class="acoes">
+      <a href="{% url 'acessos:lista' %}" class="btn-sec">🧹 Limpar filtros</a>
+    </div>
+  </div>
+
+  <form method="get" class="card filtros-form" style="margin-bottom:18px; padding:18px 22px;">
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px; align-items:end;">
+      <div class="campo" style="margin:0;">
+        <label for="id_identificador">Identificador</label>
+        {{ filter.form.identificador }}
+      </div>
+      <div class="campo" style="margin:0;">
+        <label for="id_data_inicio">Data início</label>
+        {{ filter.form.data_inicio }}
+      </div>
+      <div class="campo" style="margin:0;">
+        <label for="id_data_fim">Data fim</label>
+        {{ filter.form.data_fim }}
+      </div>
+      <div class="campo" style="margin:0;">
+        <label for="id_ponto_acesso">Ponto de acesso</label>
+        {{ filter.form.ponto_acesso }}
+      </div>
+      <div class="campo" style="margin:0;">
+        <label for="id_tipo_acesso">Tipo de acesso</label>
+        {{ filter.form.tipo_acesso }}
+      </div>
+    </div>
+    <div style="margin-top:14px; text-align:right;">
+      <button type="submit" class="btn-pri">Filtrar</button>
+    </div>
+  </form>
+
+   <p>Total de registros: {{page_obj.paginator.count}}</p> 
+  <div class="tabela-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Data e hora</th>
+          <th>Identificador</th>
+          <th>Equipamento</th>
+          <th>Grupo</th>
+          <th>Direção</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for registro in registros %}
+          <tr onclick="window.location='{% url 'acessos:detalhe' registro.pk %}'"
+              style="cursor:pointer;">
+            <td>{{ registro.timestamp|date:"d/m/Y H:i:s" }}</td>
+            <td class="id-mono">{{ registro.identificador_pseudonimizado|slice:":12" }}…</td>
+            <td>{{ registro.ponto_acesso.nome|default:"—" }}</td>
+            <td>{{ registro.ponto_acesso.grupo_equipamento|default:"—" }}</td>
+            <td>
+              {% if registro.tipo_acesso == "Entrada" %}
+                <span class="pill entrada">Entrada</span>
+              {% elif registro.tipo_acesso == "Saída" %}
+                <span class="pill saida">Saída</span>
+              {% else %}
+                <span class="pill">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:32px; color:var(--cinza);">
+              Nenhum registro encontrado.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="paginacao">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+      {% endif %}
+
+      <span class="nums">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Próxima</a>
+      {% endif %}
+    </div>
+
+
+  </div>
+{% endblock %}

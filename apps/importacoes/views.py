@@ -59,6 +59,7 @@ def importar_csv(request):
             messages.success(
                 request,
                 f"Importação concluída: {importacao.total_validos} válidos, "
+                f"{importacao.total_atualizados} atualizados, "
                 f"{importacao.total_invalidos} inválidos, "
                 f"{importacao.total_duplicados} duplicados.",
             )

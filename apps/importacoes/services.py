@@ -13,6 +13,41 @@ logger = logging.getLogger(__name__)
 TAMANHO_LOTE = 1000
 
 
+def _texto_opcional(valor):
+    """Converte NaN/vazio do pandas para None; caso contrário, string trim."""
+    if valor is None or pd.isna(valor):
+        return None
+    texto = str(valor).strip()
+    return texto or None
+
+
+def _extrair_hyperlinks_coluna(caminho_xlsx, nome_coluna):
+    """Lê apenas os hyperlinks de uma coluna do xlsx (por nome no header).
+
+    Retorna {indice_df: url}. Índice do df = linha_planilha - 2 (cabeçalho + 1-based).
+    Célula sem hyperlink não entra no dict — o valor original do pandas se mantém.
+    """
+    from openpyxl import load_workbook
+
+    try:
+        wb = load_workbook(caminho_xlsx, data_only=True, read_only=False)
+    except Exception:
+        return {}
+    ws = wb.active
+    header = [str(c.value).strip() if c.value is not None else "" for c in ws[1]]
+    if nome_coluna not in header:
+        return {}
+    col_idx = header.index(nome_coluna) + 1
+    urls = {}
+    for row_idx in range(2, ws.max_row + 1):
+        cell = ws.cell(row=row_idx, column=col_idx)
+        link = getattr(cell, "hyperlink", None)
+        alvo = getattr(link, "target", None) if link else None
+        if alvo:
+            urls[row_idx - 2] = alvo
+    return urls
+
+
 class ImportacaoService:
     """
     Responsável pelo pipeline de dados (Pandas) e persistência em lote.
@@ -55,17 +90,33 @@ class ImportacaoService:
     COL_DATA = "Data do Evento"
     COL_EQUIPAMENTO = "Equipamento"
     COL_DIRECAO = "Direção do Evento"
+    COL_GRUPO = "Grupo de Equipamento"
+    COL_AREA_ORIGEM = "Área de Origem"
+    COL_AREA_DESTINO = "Área de Destino"
+    COL_EVENTO = "Evento"
+    COL_FOTO = "Foto"
+    COL_TIPO_CONSULTA = "Tipo de Consulta"
     COLUNAS_OBRIGATORIAS = (COL_CREDENCIAL, COL_DATA)
 
     def _executar_pipeline(self):
         # 1. Carrega CSV ou Excel conforme a extensão (tudo como texto p/ validar).
-        if isinstance(self.arquivo, str) and self.arquivo.lower().endswith(
+        eh_xlsx = isinstance(self.arquivo, str) and self.arquivo.lower().endswith(
             (".xlsx", ".xls")
-        ):
+        )
+        if eh_xlsx:
             df = pd.read_excel(self.arquivo, dtype=str)
         else:
             df = pd.read_csv(self.arquivo, dtype=str)
         df.columns = [str(c).strip() for c in df.columns]
+
+        # A coluna Foto no xlsx mostra "Ver Imagem" mas o valor real é o hyperlink
+        # da célula (URL do ImageHandler). read_excel só traz o texto visível.
+        if eh_xlsx and self.COL_FOTO in df.columns:
+            urls_foto = _extrair_hyperlinks_coluna(self.arquivo, self.COL_FOTO)
+            if urls_foto:
+                df[self.COL_FOTO] = (
+                    df.index.to_series().map(urls_foto).fillna(df[self.COL_FOTO])
+                )
 
         # HU-018: cabeçalho obrigatório. Coluna essencial ausente aborta com erro claro.
         faltando = [c for c in self.COLUNAS_OBRIGATORIAS if c not in df.columns]
@@ -80,6 +131,12 @@ class ImportacaoService:
         df["timestamp"] = df[self.COL_DATA]
         df["ponto_acesso_nome"] = df.get(self.COL_EQUIPAMENTO)
         df["status_acesso"] = df.get(self.COL_DIRECAO, "")
+        df["grupo_equipamento"] = df.get(self.COL_GRUPO)
+        df["area_origem"] = df.get(self.COL_AREA_ORIGEM)
+        df["area_destino"] = df.get(self.COL_AREA_DESTINO)
+        df["evento"] = df.get(self.COL_EVENTO)
+        df["foto"] = df.get(self.COL_FOTO)
+        df["tipo_consulta"] = df.get(self.COL_TIPO_CONSULTA)
 
         # 2. Inválidos: registra (linha + motivo) linhas com credencial ou data vazias.
         falta_cred = df["credencial"].isna() | df["credencial"].astype(
@@ -117,16 +174,45 @@ class ImportacaoService:
             lambda x: pseudonimizar_identificador(str(x).strip())
         )
 
-        # 4. Transformação 2 (FK): Mapeie os nomes dos equipamentos (PontoAcesso)
+        # 4. Transformação 2 (FK): Mapeie os nomes dos equipamentos (PontoAcesso).
+        # Cada equipamento carrega seu grupo (ex.: "PORTARIA"), usado tanto no
+        # campo grupo_equipamento quanto como localização.
         nomes_pontos = df["ponto_acesso_nome"].dropna().unique()
         pontos_db = PontoAcesso.objects.filter(nome__in=nomes_pontos)
         mapa_pontos = {p.nome: p.id for p in pontos_db}
 
+        grupo_por_equipamento = (
+            df.dropna(subset=["ponto_acesso_nome"])
+            .groupby("ponto_acesso_nome")["grupo_equipamento"]
+            .apply(
+                lambda s: next((v for v in s if pd.notna(v) and str(v).strip()), None)
+            )
+            .to_dict()
+        )
+
+        # Preenche o grupo em equipamentos criados por importações antigas,
+        # que nasceram sem essa informação (reimportar o xlsx corrige o dado).
+        pontos_para_atualizar = []
+        for ponto in pontos_db:
+            grupo = grupo_por_equipamento.get(ponto.nome)
+            if grupo and not ponto.grupo_equipamento:
+                ponto.grupo_equipamento = grupo
+                if ponto.localizacao == ponto.nome:
+                    ponto.localizacao = grupo
+                pontos_para_atualizar.append(ponto)
+        if pontos_para_atualizar:
+            PontoAcesso.objects.bulk_update(
+                pontos_para_atualizar, ["grupo_equipamento", "localizacao"]
+            )
+
         pontos_faltantes = set(nomes_pontos) - set(mapa_pontos.keys())
         for nome_ponto in pontos_faltantes:
             if str(nome_ponto).strip():
+                grupo = grupo_por_equipamento.get(nome_ponto)
                 novo_ponto = PontoAcesso.objects.create(
-                    nome=nome_ponto, localizacao=nome_ponto
+                    nome=nome_ponto,
+                    localizacao=grupo or nome_ponto,
+                    grupo_equipamento=grupo,
                 )
                 mapa_pontos[nome_ponto] = novo_ponto.id
 
@@ -144,10 +230,43 @@ class ImportacaoService:
             self._finalizar_importacao(df)
             return
 
-        # 6. Confronto com o Banco de Dados
-        # Extraia a lista de tuplas únicas que restaram no Pandas.
-        # Faça uma query filtrando por essas tuplas em lotes para evitar Q objects gigantes.
-        duplicados_db = []
+        # 6. Confronto com o Banco de Dados.
+        # Para cada linha do df que bate com um registro existente no banco:
+        #   - se o registro do banco tem campos vazios que a nova linha preenche,
+        #     enriquecemos o registro (bulk_update) → conta em total_atualizados
+        #   - senão, é duplicata verdadeira → conta em total_duplicados
+        # Só linhas que NÃO estão no banco vão para bulk_create.
+        existentes_map = self._buscar_existentes(df)
+
+        if existentes_map:
+            df, enriquecidos, duplicatas_puras = self._separar_novos_e_enriquecidos(
+                df, existentes_map
+            )
+            if enriquecidos:
+                RegistroAcesso.objects.bulk_update(
+                    enriquecidos,
+                    fields=[
+                        "tipo_acesso",
+                        "evento",
+                        "foto",
+                        "tipo_consulta",
+                        "area_origem",
+                        "area_destino",
+                    ],
+                    batch_size=TAMANHO_LOTE,
+                )
+            self.importacao.total_atualizados = len(enriquecidos)
+            self.importacao.total_duplicados += duplicatas_puras
+
+        # 7. Finalização
+        # Contabilize o que sobrou no DataFrame como total_validos.
+        self._finalizar_importacao(df)
+        self._inserir_no_banco(df)
+
+    def _buscar_existentes(self, df):
+        """Retorna dict {(ident, timestamp_utc, ponto_id): RegistroAcesso} do banco
+        para as tuplas do df, em lotes para não estourar o tamanho do WHERE."""
+        existentes = {}
         lote_size = 900
         for i in range(0, len(df), lote_size):
             lote = df.iloc[i : i + lote_size]
@@ -167,41 +286,83 @@ class ImportacaoService:
                         timestamp=row[1],
                         ponto_acesso__isnull=True,
                     )
-
-            if q_objects:
-                duplicados_db.extend(
-                    RegistroAcesso.objects.filter(q_objects).values_list(
-                        "identificador_pseudonimizado", "timestamp", "ponto_acesso_id"
-                    )
+            if not q_objects:
+                continue
+            for obj in RegistroAcesso.objects.filter(q_objects):
+                chave = (
+                    obj.identificador_pseudonimizado,
+                    pd.Timestamp(obj.timestamp),
+                    obj.ponto_acesso_id,
                 )
+                existentes[chave] = obj
+        return existentes
 
-        if duplicados_db:
-            db_df = pd.DataFrame(
-                list(duplicados_db),
-                columns=[
-                    "identificador_pseudonimizado",
-                    "timestamp_dt",
-                    "ponto_acesso_id",
-                ],
+    _CAMPOS_ENRIQUECIVEIS = (
+        ("status_acesso", "tipo_acesso"),
+        ("evento", "evento"),
+        ("foto", "foto"),
+        ("tipo_consulta", "tipo_consulta"),
+        ("area_origem", "area_origem"),
+        ("area_destino", "area_destino"),
+    )
+
+    def _separar_novos_e_enriquecidos(self, df, existentes_map):
+        """Divide o df em (novos, enriquecidos, duplicatas_puras).
+
+        - novos: linhas que não existem no banco (viram bulk_create)
+        - enriquecidos: objetos do banco que ganham campos antes vazios
+        - duplicatas_puras: registros já completos, apenas contados
+        """
+        novos_idx = []
+        enriquecidos = []
+        duplicatas_puras = 0
+
+        for idx, row in df.iterrows():
+            ponto_id = None
+            if pd.notna(row["ponto_acesso_id"]):
+                ponto_id = int(row["ponto_acesso_id"])
+            chave = (
+                row["identificador_pseudonimizado"],
+                row["timestamp_dt"],
+                ponto_id,
             )
-            # Converter timestamp do banco para o mesmo timezone do dataframe
-            db_df["timestamp_dt"] = pd.to_datetime(db_df["timestamp_dt"], utc=True)
+            existente = existentes_map.get(chave)
+            if existente is None:
+                novos_idx.append(idx)
+                continue
 
-            antes_db_dedup = len(df)
-            merged = df.merge(
-                db_df,
-                on=["identificador_pseudonimizado", "timestamp_dt", "ponto_acesso_id"],
-                how="left",
-                indicator=True,
-            )
-            df = merged[merged["_merge"] == "left_only"].drop(columns=["_merge"])
+            alterado = False
+            for campo_df, campo_model in self._CAMPOS_ENRIQUECIVEIS:
+                atual = getattr(existente, campo_model, None)
+                novo = _texto_opcional(row.get(campo_df))
+                if self._deve_enriquecer(campo_model, atual, novo):
+                    setattr(existente, campo_model, novo)
+                    alterado = True
+            if alterado:
+                enriquecidos.append(existente)
+            else:
+                duplicatas_puras += 1
 
-            self.importacao.total_duplicados += antes_db_dedup - len(df)
+        return df.loc[novos_idx], enriquecidos, duplicatas_puras
 
-        # 7. Finalização
-        # Contabilize o que sobrou no DataFrame como total_validos.
-        self._finalizar_importacao(df)
-        self._inserir_no_banco(df)
+    @staticmethod
+    def _deve_enriquecer(campo, atual, novo):
+        """Só enriquece se o novo valor tem conteúdo e o atual está vazio.
+
+        Trata 'Ver Imagem' no campo foto como placeholder (o xlsx exporta esse
+        texto quando o valor real deveria ser o URL do hyperlink).
+        """
+        if not novo:
+            return False
+        if not atual:
+            return True
+        if (
+            campo == "foto"
+            and str(atual).strip() == "Ver Imagem"
+            and novo != "Ver Imagem"
+        ):
+            return True
+        return False
 
     def _registrar_falha(self, idx, motivo):
         # idx: índice 0-based do read_csv → linha no arquivo = idx + 2 (cabeçalho + base 1)
@@ -216,7 +377,10 @@ class ImportacaoService:
     def _finalizar_importacao(self, df):
         self.importacao.total_validos = len(df)
         self.importacao.total_registros = (
-            len(df) + self.importacao.total_invalidos + self.importacao.total_duplicados
+            len(df)
+            + self.importacao.total_invalidos
+            + self.importacao.total_duplicados
+            + self.importacao.total_atualizados
         )
         self.importacao.status = "SUCESSO"
         self.importacao.motivo_erro = ""
@@ -226,6 +390,7 @@ class ImportacaoService:
                 "total_validos",
                 "total_invalidos",
                 "total_duplicados",
+                "total_atualizados",
                 "status",
                 "motivo_erro",
             ]
@@ -254,6 +419,11 @@ class ImportacaoService:
                     tipo_acesso=row["status_acesso"],
                     timestamp=row["timestamp_dt"],
                     importacao=self.importacao,
+                    evento=_texto_opcional(row.get("evento")),
+                    foto=_texto_opcional(row.get("foto")),
+                    tipo_consulta=_texto_opcional(row.get("tipo_consulta")),
+                    area_origem=_texto_opcional(row.get("area_origem")),
+                    area_destino=_texto_opcional(row.get("area_destino")),
                 )
             )
 
