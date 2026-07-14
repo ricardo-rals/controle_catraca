@@ -9,10 +9,7 @@ from apps.analytics.services import total_de_acessos
 from apps.importacoes.models import Importacao
 from django.urls import reverse
 from django.test import Client
-from django.contrib.auth import get_user_model
-from apps.usuarios.models import UsuarioSistema
 from datetime import timedelta
-from django.utils import timezone
 
 
 def _cria_registros(quantidade):
