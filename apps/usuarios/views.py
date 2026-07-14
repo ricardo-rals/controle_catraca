@@ -9,6 +9,7 @@ from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.acessos.models import RegistroAcesso
+from apps.analytics.services import fluxo_por_tipo, fluxo_por_ponto
 from django.views.generic import ListView
 from .mixins import PerfilRequeridoMixin, perfil_requerido
 from django.contrib.auth.views import LoginView
@@ -146,6 +147,13 @@ def _contexto_dashboard(request):
     if data_fim:
         queryset = queryset.filter(timestamp__date__lte=data_fim)
 
+    # Otimiza relações usadas pelos serviços de agregação.
+    qs_para_analise = queryset.select_related("ponto_acesso")
+
+    # HU-036 — composições de fluxo por tipo e por ponto de acesso.
+    fluxo_tipo = fluxo_por_tipo(qs_para_analise)
+    fluxo_ponto = fluxo_por_ponto(qs_para_analise)
+
     return {
         "queryset": queryset,  # base já filtrada para as HUs 033–036
         "data_inicio": data_inicio.isoformat() if data_inicio else "",
@@ -157,8 +165,8 @@ def _contexto_dashboard(request):
         "pessoas_unicas": None,
         "serie_volume": None,
         "picos_hora": None,
-        "fluxo_tipo": None,
-        "fluxo_ponto": None,
+        "fluxo_tipo": fluxo_tipo,
+        "fluxo_ponto": fluxo_ponto,
     }
 
 
