@@ -1,0 +1,83 @@
+{% extends "base_app.html" %}
+
+{% block titulo %}{{ rel.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* o identificador (hash) é longo e sem espaços: quebra dentro da célula
+     em vez de esticar/cortar a tabela. */
+  .tabela-relatorio td { overflow-wrap: anywhere; }
+</style>
+{% endblock %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">
+        <a href="{% url 'relatorios:lista' %}" style="color:inherit;">Relatórios</a> / {{ rel.nome }}
+      </div>
+      <h1>{{ rel.nome }}</h1>
+    </div>
+  </div>
+
+  <!-- Filtros específicos do relatório -->
+  <form method="get" class="card filtros-form" style="margin-bottom:14px; padding:18px 22px;">
+    <input type="hidden" name="buscar" value="1">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; align-items:end;">
+      {% for campo in form %}
+        <div class="campo" style="margin:0;">
+          <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+          {{ campo }}
+        </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end;">
+      <a class="btn-sec" href="?buscar=1">Buscar todos os dados</a>
+      <button type="submit" class="btn-pri">Filtrar</button>
+    </div>
+  </form>
+
+  {% if buscou %}
+    <!-- Exportação: carrega os filtros atuais na querystring -->
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <a class="btn-sec" href="{% url 'relatorios:exportar' rel.slug 'pdf' %}?{{ request.GET.urlencode }}">📄 PDF</a>
+      <a class="btn-sec" href="{% url 'relatorios:exportar' rel.slug 'excel' %}?{{ request.GET.urlencode }}">📊 Excel</a>
+      <a class="btn-sec" href="{% url 'relatorios:exportar' rel.slug 'csv' %}?{{ request.GET.urlencode }}">📑 CSV</a>
+    </div>
+
+    <!-- Prévia da tabela que será exportada -->
+    <div class="tabela-card">
+      <div class="cab" style="padding:14px 18px;">
+        <div>
+          <h3>Prévia</h3>
+          <div class="leg">
+            {{ dados.periodo }} · mostrando {{ dados.preview|length }} de {{ dados.linhas|length }} registro{{ dados.linhas|length|pluralize:"s" }}
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tabela-relatorio">
+          <thead>
+            <tr>{% for c in dados.colunas %}<th>{{ c }}</th>{% endfor %}</tr>
+          </thead>
+          <tbody>
+            {% for linha in dados.preview %}
+              <tr>{% for celula in linha %}<td>{{ celula|default:"—" }}</td>{% endfor %}</tr>
+            {% empty %}
+              <tr>
+                <td colspan="{{ dados.colunas|length }}" style="text-align:center; padding:32px; color:var(--cinza);">
+                  Nenhum registro para os filtros escolhidos.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center; padding:40px; color:var(--cinza);">
+      Escolha os filtros e clique em <strong>Filtrar</strong>, ou use
+      <strong>Buscar todos os dados</strong> para trazer o período completo.
+    </div>
+  {% endif %}
+{% endblock %}

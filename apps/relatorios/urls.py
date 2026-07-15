@@ -5,6 +5,7 @@ from . import views
 app_name = "relatorios"
 
 urlpatterns = [
-    path("pdf/", views.relatorio_pdf, name="pdf"),
-    path("excel/", views.relatorio_excel,name="excel"),
+    path("", views.lista, name="lista"),
+    path("<slug:slug>/", views.detalhe, name="detalhe"),
+    path("<slug:slug>/export/<str:formato>/", views.exportar, name="exportar"),
 ]
