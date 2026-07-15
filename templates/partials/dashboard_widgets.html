@@ -38,114 +38,60 @@
   </div>
 </div>
 
-<!-- Gráficos -->
-<div class="grid-graficos">
-  <div class="card">
-    <div class="cab">
-      <div>
-        <h3>Acessos ao longo do tempo</h3>
-        <div class="leg">Volume diário no período selecionado</div>
-      </div>
-      <span class="badge">Por dia</span>
+<!-- HU-034: Acessos ao longo do tempo (linha) -->
+<div class="card" style="margin-bottom:18px;">
+  <div class="cab">
+    <div>
+      <h3>Acessos ao longo do tempo</h3>
+      <div class="leg">Volume diário no período selecionado</div>
     </div>
-    <!-- Eixos prontos; a série de dados é desenhada na HU-034 -->
-    <div class="grafico-wrap">
-      <svg class="linha-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
-        <line x1="0" y1="45" x2="600" y2="45" stroke="#eef2f0" stroke-width="1"/>
-        <line x1="0" y1="90" x2="600" y2="90" stroke="#eef2f0" stroke-width="1"/>
-        <line x1="0" y1="135" x2="600" y2="135" stroke="#eef2f0" stroke-width="1"/>
-      </svg>
-      <div class="sem-dados">Sem dados para o período</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cinza);margin-top:8px;">
-      <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
-    </div>
+    <span class="badge">Por dia</span>
   </div>
 
-  <div class="card">
-    <div class="cab">
-      <div>
-        <h3>Fluxo por perfil</h3>
-        <div class="leg">Composição dos acessos</div>
-      </div>
+  {{ serie_volume|json_script:"dados-volume" }}
+  {% if serie_volume %}
+    <div class="grafico-wrap" style="height:280px;">
+      <canvas id="grafico-volume"></canvas>
     </div>
-      <!-- HU-036: Gráfico de composição por tipo e barras por ponto (Chart.js) -->
-      {% if not fluxo_tipo and not fluxo_ponto %}
-      <div class="donut-wrap">
-        <div class="sem-dados">Sem dados de fluxo para o período selecionado</div>
-      </div>
-      {% else %}
-      <div class="donut-wrap charts-grid">
-        <div class="chart-card">
-          <canvas id="chart-fluxo-tipo" width="400" height="380"></canvas>
-        </div>
-        <div class="chart-card">
-          <canvas id="chart-fluxo-ponto" width="400" height="380"></canvas>
-        </div>
-      </div>
+    <script>
+      (function () {
+        const el = document.getElementById("dados-volume");
+        const canvas = document.getElementById("grafico-volume");
+        if (!el || !canvas) return;
 
-      {{ fluxo_tipo|json_script:"fluxo-tipo-data" }}
-      {{ fluxo_ponto|json_script:"fluxo-ponto-data" }}
+        const dados = JSON.parse(el.textContent || "[]");
+        const existente = Chart.getChart(canvas);
+        if (existente) existente.destroy();
 
-      <script>
-        (function(){
-          const tipo = JSON.parse(document.getElementById('fluxo-tipo-data').textContent || '[]');
-          const ponto = JSON.parse(document.getElementById('fluxo-ponto-data').textContent || '[]');
-
-          // Pizza: composição por tipo
-          const ctxTipo = document.getElementById('chart-fluxo-tipo').getContext('2d');
-          const labelsTipo = tipo.map(t => t.tipo || '—');
-          const dataTipo = tipo.map(t => t.total || 0);
-          const totalTipo = dataTipo.reduce((a,b)=>a+b,0);
-
-          const chartTipoExistente = Chart.getChart(ctxTipo.canvas);
-          if (chartTipoExistente) chartTipoExistente.destroy();
-
-          new Chart(ctxTipo, {
-            type: 'pie',
-            data: {
-              labels: labelsTipo,
-              datasets: [{ data: dataTipo, backgroundColor: ['#0a7d4d','#2d7dd2','#f5a623','#9b59b6'] }]
+        new Chart(canvas.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: dados.map((d) => d.periodo),
+            datasets: [{
+              label: "Acessos",
+              data: dados.map((d) => d.total),
+              borderColor: "#0a7d4d",
+              backgroundColor: "rgba(10,125,77,0.12)",
+              fill: true,
+              tension: 0.3,
+              pointRadius: 3,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `Acessos: ${c.parsed.y}` } },
             },
-            options: {
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => {
-                      const val = ctx.raw || 0;
-                      const pct = totalTipo ? Math.round((val / totalTipo) * 100) : 0;
-                      return `${ctx.label}: ${pct}% (${val} acessos)`;
-                    }
-                  }
-                }
-              }
-            }
-          });
-
-          // Barras: fluxo por ponto
-          const ctxPonto = document.getElementById('chart-fluxo-ponto').getContext('2d');
-          const labelsPonto = ponto.map(p => p.ponto || '—');
-          const dataPonto = ponto.map(p => p.total || 0);
-
-          const chartPontoExistente = Chart.getChart(ctxPonto.canvas);
-          if (chartPontoExistente) chartPontoExistente.destroy();
-
-          new Chart(ctxPonto, {
-            type: 'bar',
-            data: {
-              labels: labelsPonto,
-              datasets: [{ label: 'Acessos', data: dataPonto, backgroundColor: '#2d7dd2' }]
-            },
-            options: {
-              scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } }
-              }
-            }
-          });
-        })();
-      </script>
-      {% endif %}
-  </div>
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          },
+        });
+      })();
+    </script>
+  {% else %}
+    <div class="grafico-wrap"><div class="sem-dados">Sem dados para o período</div></div>
+  {% endif %}
 </div>
 
 <div class="card barras-wrap">
@@ -156,6 +102,47 @@
     </div>
     <span class="badge">Por hora</span>
   </div>
-  <!-- As barras são geradas a partir dos dados reais na HU-035 -->
-  <div class="barras-vazio">Sem dados para o período</div>
+
+  {# HU-035: dados via json_script; barra do pico destacada #}
+  {{ picos_hora|json_script:"dados-picos" }}
+  <div class="grafico-wrap" style="height:300px;">
+    <canvas id="grafico-picos"></canvas>
+  </div>
+
+  <script>
+    (function () {
+      const el = document.getElementById("dados-picos");
+      const canvas = document.getElementById("grafico-picos");
+      if (!el || !canvas) return;
+
+      const dados = JSON.parse(el.textContent || "[]");
+      const totais = dados.map((d) => d.total);
+      const maximo = Math.max(...totais, 0);
+
+      const existente = Chart.getChart(canvas);
+      if (existente) existente.destroy();
+
+      new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: dados.map((d) => String(d.hora).padStart(2, "0") + "h"),
+          datasets: [{
+            label: "Acessos",
+            data: totais,
+            backgroundColor: totais.map((v) => (v === maximo && v > 0 ? "#f5a623" : "#0a7d4d")),
+            borderRadius: 4,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => `Acessos: ${c.parsed.y}` } },
+          },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+    })();
+  </script>
 </div>

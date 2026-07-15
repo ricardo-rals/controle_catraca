@@ -9,7 +9,11 @@ from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.acessos.models import RegistroAcesso
-from apps.analytics.services import fluxo_por_tipo, fluxo_por_ponto
+from apps.analytics.services import (
+    picos_por_hora,
+    total_de_acessos,
+    volume_por_periodo,
+)
 from django.views.generic import ListView
 from .mixins import PerfilRequeridoMixin, perfil_requerido
 from django.contrib.auth.views import LoginView
@@ -20,7 +24,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomTokenObtainPairSerializer
-from apps.analytics import services as analytics_service
 
 
 # classe resposnsavel por listar os usuarios do sistema, apenas para o perfil admin.
@@ -148,78 +151,44 @@ def _contexto_dashboard(request):
     if data_fim:
         queryset = queryset.filter(timestamp__date__lte=data_fim)
 
-    # Otimiza relações usadas pelos serviços de agregação.
-    qs_para_analise = queryset.select_related("ponto_acesso")
+    # KPIs (HU-033)
+    picos = picos_por_hora(queryset)
+    pico = max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    serie = volume_por_periodo(queryset, "dia")
+    media_diaria = round(sum(d["total"] for d in serie) / len(serie)) if serie else None
 
-    # HU-036 — composições de fluxo por tipo e por ponto de acesso.
-    fluxo_tipo = fluxo_por_tipo(qs_para_analise)
-    fluxo_ponto = fluxo_por_ponto(qs_para_analise)
+    # HU-034 — série diária para o gráfico de linha (periodo é datetime → rótulo curto).
+    serie_volume = [
+        {"periodo": d["periodo"].strftime("%d/%m"), "total": d["total"]} for d in serie
+    ]
 
     return {
-        "queryset": queryset,  # base já filtrada para as HUs 033–036
+        "queryset": queryset,  # base já filtrada
         "data_inicio": data_inicio.isoformat() if data_inicio else "",
         "data_fim": data_fim.isoformat() if data_fim else "",
         "hoje": timezone.localdate().isoformat(),  # limite máximo dos campos de data
-        "total_acessos": None,
-        "media_diaria": None,
-        "horario_pico": None,
-        "pessoas_unicas": None,
-        "serie_volume": None,
-        "picos_hora": None,
-        "fluxo_tipo": fluxo_tipo,
-        "fluxo_ponto": fluxo_ponto,
+        "total_acessos": total_de_acessos(queryset),
+        "media_diaria": media_diaria,
+        "horario_pico": f"{pico['hora']:02d}h" if pico else None,
+        "pessoas_unicas": queryset.values("identificador_pseudonimizado")
+        .distinct()
+        .count(),
+        "serie_volume": serie_volume,  # HU-034 (gráfico de acessos ao longo do tempo)
+        "picos_hora": picos,  # HU-035 (gráfico de horários de pico)
     }
 
 
 @login_required
 def dashboard(request):
-    """Dashboard - primeira tela após login (HU-032/037/033)."""
-    
-    from apps.analytics.services import picos_por_hora, total_de_acessos, volume_por_periodo
-    from apps.acessos.models import RegistroAcesso
-    
+    """Dashboard — primeira tela após login (HU-032/033/035/036/037).
+
+    Requisição normal → página inteira. Requisição HTMX (header HX-Request,
+    disparada pelos filtros de período) → só o fragmento de widgets.
+    """
     contexto = _contexto_dashboard(request)
-    
-    queryset = contexto.get("queryset", RegistroAcesso.objects.all())
-    
-    
-    try:
-        total_acessos = total_de_acessos(queryset)
-    except Exception:
-        total_acessos = queryset.count() if queryset else None
-
-    try:
-        volumes = volume_por_periodo(queryset, "dia") 
-        media_diaria = sum(volumes) / len(volumes) if volumes else None
-    except Exception:
-        media_diaria = None
-
-    try:
-        horario_pico = picos_por_hora(queryset)
-    except Exception:
-        horario_pico = None
-
-    try:
-        pessoas_unicas = queryset.values("identificador_pseudonimizado").distinct().count()
-    except Exception:
-        pessoas_unicas = None
-
-    contexto.update({
-        "kpi_total_acessos": total_acessos,
-        "kpi_media_diaria": media_diaria,
-        "kpi_horario_pico": horario_pico,
-        "kpi_pessoas_unicas": pessoas_unicas,
-    })
-
     if request.headers.get("HX-Request"):
         return render(request, "partials/dashboard_widgets.html", contexto)
-        
     return render(request, "dashboard.html", contexto)
-
-
-@login_required
-def upload_arquivo(request):
-    pass  # ... código existente da view ...
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
