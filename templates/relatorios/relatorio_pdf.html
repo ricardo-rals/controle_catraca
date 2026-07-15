@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <title>Relatório de Acessos</title>
+  <title>{{ rel.nome }}</title>
   <style>
     @page {
       size: A4;
@@ -14,78 +14,26 @@
         color: #8a8a8a;
       }
     }
-
     * { box-sizing: border-box; }
-    body {
-      font-family: "DejaVu Sans", sans-serif;
-      color: #1b2b24;
-      font-size: 12px;
-      margin: 0;
-    }
+    body { font-family: "DejaVu Sans", sans-serif; color: #1b2b24; font-size: 11px; margin: 0; }
 
-    .rodape {
-      position: running(rodape);
-      font-size: 9px;
-      color: #8a8a8a;
-    }
+    .rodape { position: running(rodape); font-size: 9px; color: #8a8a8a; }
 
-    header {
-      border-bottom: 3px solid #0a7d4d;
-      padding-bottom: 14px;
-      margin-bottom: 22px;
-    }
+    header { border-bottom: 3px solid #0a7d4d; padding-bottom: 14px; margin-bottom: 22px; }
     header .marca { font-size: 12px; color: #0a7d4d; font-weight: 700; letter-spacing: .5px; }
     header h1 { font-size: 22px; margin: 4px 0 6px; color: #0d1b16; }
     header .meta { font-size: 11px; color: #5d6b64; }
 
-    .kpis {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .kpi {
-      flex: 1;
-      border: 1px solid #dde5e1;
-      border-radius: 10px;
-      padding: 14px 16px;
-    }
-    .kpi .valor { font-size: 24px; font-weight: 700; color: #0a7d4d; }
-    .kpi .rotulo {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      color: #5d6b64;
-      margin-top: 4px;
-    }
+    h2 { font-size: 13px; color: #0d1b16; margin: 20px 0 8px; padding-bottom: 5px; border-bottom: 1px solid #eef2f0; }
 
-    h2 {
-      font-size: 14px;
-      color: #0d1b16;
-      margin: 22px 0 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #eef2f0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 8px;
-    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 8px; table-layout: fixed; }
     th, td {
-      text-align: left;
-      padding: 8px 10px;
-      font-size: 11.5px;
+      text-align: left; padding: 6px 8px; font-size: 10.5px;
       border-bottom: 1px solid #eef2f0;
+      overflow-wrap: anywhere;  /* quebra o hash longo em vez de cortar a página */
     }
-    th {
-      background: #f5f8f6;
-      color: #5d6b64;
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: .4px;
-    }
+    th { background: #f5f8f6; color: #5d6b64; text-transform: uppercase; font-size: 9px; letter-spacing: .3px; }
     td.num, th.num { text-align: right; }
-    tr.total td { font-weight: 700; border-top: 2px solid #dde5e1; }
   </style>
 </head>
 <body>
@@ -96,69 +44,32 @@
 
   <header>
     <div class="marca">SISTEMA CAC — CONTROLE DE ACESSO DO CAMPUS</div>
-    <h1>Relatório de Acessos</h1>
-    <div class="meta">
-      Período:
-      {% if data_inicio or data_fim %}
-        {{ data_inicio|date:"d/m/Y"|default:"início" }} a {{ data_fim|date:"d/m/Y"|default:"hoje" }}
-      {% else %}
-        todos os registros
-      {% endif %}
-      {% if tipo_acesso %} · Tipo: {{ tipo_acesso }}{% endif %}
-      {% if ponto_acesso %} · Ponto: {{ ponto_acesso.nome }}{% endif %}
-    </div>
+    <h1>{{ rel.nome }}</h1>
+    <div class="meta">Período: {{ dados.periodo }}</div>
   </header>
 
-  <div class="kpis">
-    <div class="kpi">
-      <div class="valor">{{ total_acessos }}</div>
-      <div class="rotulo">Total de acessos</div>
-    </div>
-    <div class="kpi">
-      <div class="valor">{{ pessoas_unicas }}</div>
-      <div class="rotulo">Pessoas únicas</div>
-    </div>
-    <div class="kpi">
-      <div class="valor">{% if hora_pico %}{{ hora_pico.hora }}h{% else %}—{% endif %}</div>
-      <div class="rotulo">Horário de pico</div>
-    </div>
-  </div>
+  {% if dados.resumo %}
+    <h2>Resumo</h2>
+    <table>
+      <tbody>
+        {% for rotulo, valor in dados.resumo %}
+          <tr><td>{{ rotulo }}</td><td class="num">{{ valor }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 
-  <h2>Fluxo por tipo de acesso</h2>
+  <h2>Dados ({{ dados.linhas|length }})</h2>
   <table>
     <thead>
-      <tr><th>Tipo</th><th class="num">Total</th></tr>
+      <tr>{% for c in dados.colunas %}<th>{{ c }}</th>{% endfor %}</tr>
     </thead>
     <tbody>
-      {% for linha in fluxo_tipo %}
-        <tr>
-          <td>{{ linha.tipo|default:"—" }}</td>
-          <td class="num">{{ linha.total }}</td>
-        </tr>
+      {% for linha in dados.linhas %}
+        <tr>{% for celula in linha %}<td>{{ celula }}</td>{% endfor %}</tr>
       {% empty %}
-        <tr><td colspan="2">Nenhum acesso no período.</td></tr>
+        <tr><td colspan="{{ dados.colunas|length }}">Nenhum registro para os filtros.</td></tr>
       {% endfor %}
-    </tbody>
-  </table>
-
-  <h2>Acessos por ponto</h2>
-  <table>
-    <thead>
-      <tr><th>Ponto de acesso</th><th class="num">Total</th></tr>
-    </thead>
-    <tbody>
-      {% for linha in fluxo_ponto %}
-        <tr>
-          <td>{{ linha.ponto|default:"—" }}</td>
-          <td class="num">{{ linha.total }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="2">Nenhum acesso no período.</td></tr>
-      {% endfor %}
-      <tr class="total">
-        <td>Total</td>
-        <td class="num">{{ total_acessos }}</td>
-      </tr>
     </tbody>
   </table>
 </body>
