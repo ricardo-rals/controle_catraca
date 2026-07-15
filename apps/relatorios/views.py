@@ -1,11 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.views.generic import TemplateView
 from django.template.loader import render_to_string
 from django.utils import timezone
 from weasyprint import HTML
 import pandas as pd
 from io import BytesIO
-from openpyxl.styles import Font
+from openpyxl.styles import Font, NamedStyle
 from apps.acessos.filters import RegistroAcessoFilter
 from apps.acessos.models import RegistroAcesso
 from apps.analytics.services import (
@@ -14,6 +15,17 @@ from apps.analytics.services import (
     picos_por_hora,
     total_de_acessos,
 )
+
+
+class RelatoriosView(TemplateView):
+    template_name = "relatorios/relatorios.html"
+
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        # Reaproveita os dados do helper para mostrar na tela
+        dados = _dados_relatorio(self.request)
+        contexto.update(dados)
+        return contexto
 
 
 def _dados_relatorio(request):
@@ -61,6 +73,12 @@ def relatorio_pdf(request):
     WeasyPrint, devolvendo application/pdf com download automático.
     """
     contexto = _dados_relatorio(request)
+
+    if not contexto["queryset"].exists():
+        return HttpResponse(
+            "Nenhum dado encontrado para os filtros aplicados.", status=404
+        )
+
     html = render_to_string("relatorios/relatorio_pdf.html", contexto)
     pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
 
@@ -70,11 +88,15 @@ def relatorio_pdf(request):
     return resposta
 
 
-
 @login_required
 def relatorio_excel(request):
 
     contexto = _dados_relatorio(request)
+
+    if not contexto["queryset"].exists():
+        return HttpResponse(
+            "Nenhum dado encontrado para os filtros aplicados.", status=404
+        )
 
     resumo_df = pd.DataFrame(
         [
@@ -91,30 +113,32 @@ def relatorio_excel(request):
 
     queryset = contexto["queryset"]
 
-    dados = []
-
-    for registro in queryset:
-        dados.append(
-            {
-                "Identificador": registro.identificador_pseudonimizado,
-                "Tipo de Acesso": registro.tipo_acesso,
-                "Timestamp": registro.timestamp,
-                "Ponto de Acesso": (
-                    registro.ponto_acesso.nome
-                    if registro.ponto_acesso
-                    else ""
-                ),
-            }
-        )
+    dados = [
+        {
+            "Identificador": r.identificador_pseudonimizado,
+            "Tipo de Acesso": r.tipo_acesso,
+            "Timestamp": r.timestamp,
+            "Ponto de Acesso": r.ponto_acesso.nome if r.ponto_acesso else "",
+        }
+        for r in queryset
+    ]
 
     dados_df = pd.DataFrame(dados)
 
-    #cria o arquio excel em memoria
-    output= BytesIO()
+    # cria o arquio excel em memoria
+    output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        resumo_df.to_excel(writer,sheet_name="Resumo",index=False,)
-        dados_df.to_excel(writer,sheet_name="Dados",index=False,)
+        resumo_df.to_excel(
+            writer,
+            sheet_name="Resumo",
+            index=False,
+        )
+        dados_df.to_excel(
+            writer,
+            sheet_name="Dados",
+            index=False,
+        )
         ws_resumo = writer.sheets["Resumo"]
         ws_dados = writer.sheets["Dados"]
 
@@ -125,35 +149,37 @@ def relatorio_excel(request):
             cell.font = Font(bold=True)
 
         for coluna in ws_resumo.columns:
-            tamanho= max(len(str(cell.value)) if cell.value else 0 for cell in coluna)
+            tamanho = max(len(str(cell.value)) if cell.value else 0 for cell in coluna)
             ws_resumo.column_dimensions[coluna[0].column_letter].width = tamanho + 2
-    
-        for coluna in ws_dados.columns :
-            tamanho= max(len(str(cell.value)) if cell.value else 0 for cell in coluna)
+
+        for coluna in ws_dados.columns:
+            tamanho = max(len(str(cell.value)) if cell.value else 0 for cell in coluna)
             ws_dados.column_dimensions[coluna[0].column_letter].width = tamanho + 2
-    
-        linha_total= ws_dados.max_row + 1
+
+        linha_total = ws_dados.max_row + 1
 
         ws_dados.cell(row=linha_total, column=1, value="TOTAL")
-    
-        ws_dados.cell(row=linha_total, column=2,value=len(dados_df))
 
-        ws_dados.cell(row=linha_total, column=1).font= Font(bold=True)
-        ws_dados.cell(row=linha_total,column=2).font= Font(bold=True)
+        ws_dados.cell(row=linha_total, column=2, value=len(dados_df))
+
+        ws_dados.cell(row=linha_total, column=1).font = Font(bold=True)
+        ws_dados.cell(row=linha_total, column=2).font = Font(bold=True)
+
+        # Estilo para datas
+        date_style = NamedStyle(name="datetime", number_format="DD/MM/YYYY HH:MM")
+        for cell in ws_dados["C"]:  # coluna Timestamp
+            cell.style = date_style
 
     output.seek(0)
 
-    
     response = HttpResponse(
         output.getvalue(),
         content_type=(
-            "application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
+            "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
         ),
     )
 
-    response["Content-Disposition"] = (
-        'attachment; filename="relatorio_acessos.xlsx"'
-    )
+    nome = f"relatorio_acessos_{timezone.localdate():%Y%m%d}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{nome}"'
 
     return response

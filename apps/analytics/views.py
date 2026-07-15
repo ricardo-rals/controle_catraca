@@ -11,7 +11,7 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.views import View
 
-from .models import Evento  # ajuste para o modelo real usado no queryset
+# from .models import Evento  # ajuste para o modelo real usado no queryset
 from .services import usuarios_frequentes
 
 from django.utils.dateparse import parse_date
@@ -154,20 +154,16 @@ class FluxoPontoView(View):
         queryset = RegistroAcesso.objects.select_related("ponto_acesso").all()
         queryset = _aplicar_filtros_de_data(request, queryset)
         return JsonResponse(fluxo_por_ponto(queryset), safe=False)
-from django.utils.dateparse import parse_date
-from rest_framework import status
-from rest_framework.response import Response
+
+
 from rest_framework.views import APIView
 
-from apps.acessos.models import RegistroAcesso
 
 from .services import (
     fluxo_por_ponto,
     fluxo_por_tipo,
     picos_por_hora,
     top_dias,
-    usuarios_frequentes,
-    volume_por_periodo,
 )
 
 
