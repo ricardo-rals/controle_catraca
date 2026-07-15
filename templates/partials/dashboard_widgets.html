@@ -69,18 +69,82 @@
         <div class="leg">Composição dos acessos</div>
       </div>
     </div>
-    <!-- Anel vazio; os segmentos são preenchidos na HU-036 -->
-    <div class="donut-wrap">
-      <svg width="130" height="130" viewBox="0 0 42 42">
-        <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#eef2f0" stroke-width="6"/>
-        <text x="21" y="23" text-anchor="middle" font-size="6" font-weight="700" font-family="Sora" fill="#5d6b64">—</text>
-      </svg>
-      <div class="legenda-donut">
-        <div class="item"><span class="pnt" style="background:#0a7d4d"></span> Estudantes <span class="pct">—</span></div>
-        <div class="item"><span class="pnt" style="background:#2d7dd2"></span> Servidores <span class="pct">—</span></div>
-        <div class="item"><span class="pnt" style="background:#f5a623"></span> Visitantes <span class="pct">—</span></div>
+      <!-- HU-036: Gráfico de composição por tipo e barras por ponto (Chart.js) -->
+      {% if not fluxo_tipo and not fluxo_ponto %}
+      <div class="donut-wrap">
+        <div class="sem-dados">Sem dados de fluxo para o período selecionado</div>
       </div>
-    </div>
+      {% else %}
+      <div class="donut-wrap charts-grid">
+        <div class="chart-card">
+          <canvas id="chart-fluxo-tipo" width="400" height="380"></canvas>
+        </div>
+        <div class="chart-card">
+          <canvas id="chart-fluxo-ponto" width="400" height="380"></canvas>
+        </div>
+      </div>
+
+      {{ fluxo_tipo|json_script:"fluxo-tipo-data" }}
+      {{ fluxo_ponto|json_script:"fluxo-ponto-data" }}
+
+      <script>
+        (function(){
+          const tipo = JSON.parse(document.getElementById('fluxo-tipo-data').textContent || '[]');
+          const ponto = JSON.parse(document.getElementById('fluxo-ponto-data').textContent || '[]');
+
+          // Pizza: composição por tipo
+          const ctxTipo = document.getElementById('chart-fluxo-tipo').getContext('2d');
+          const labelsTipo = tipo.map(t => t.tipo || '—');
+          const dataTipo = tipo.map(t => t.total || 0);
+          const totalTipo = dataTipo.reduce((a,b)=>a+b,0);
+
+          const chartTipoExistente = Chart.getChart(ctxTipo.canvas);
+          if (chartTipoExistente) chartTipoExistente.destroy();
+
+          new Chart(ctxTipo, {
+            type: 'pie',
+            data: {
+              labels: labelsTipo,
+              datasets: [{ data: dataTipo, backgroundColor: ['#0a7d4d','#2d7dd2','#f5a623','#9b59b6'] }]
+            },
+            options: {
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => {
+                      const val = ctx.raw || 0;
+                      const pct = totalTipo ? Math.round((val / totalTipo) * 100) : 0;
+                      return `${ctx.label}: ${pct}% (${val} acessos)`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+
+          // Barras: fluxo por ponto
+          const ctxPonto = document.getElementById('chart-fluxo-ponto').getContext('2d');
+          const labelsPonto = ponto.map(p => p.ponto || '—');
+          const dataPonto = ponto.map(p => p.total || 0);
+
+          const chartPontoExistente = Chart.getChart(ctxPonto.canvas);
+          if (chartPontoExistente) chartPontoExistente.destroy();
+
+          new Chart(ctxPonto, {
+            type: 'bar',
+            data: {
+              labels: labelsPonto,
+              datasets: [{ label: 'Acessos', data: dataPonto, backgroundColor: '#2d7dd2' }]
+            },
+            options: {
+              scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+              }
+            }
+          });
+        })();
+      </script>
+      {% endif %}
   </div>
 </div>
 
