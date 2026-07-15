@@ -1,0 +1,17 @@
+{% extends "base_app.html" %}
+
+{% block page_content %}
+  <h1>Relatórios</h1>
+
+  <form id="form-relatorio" method="get" class="card">
+    <label>Data início</label>
+    <input type="date" name="data_inicio">
+    <label>Data fim</label>
+    <input type="date" name="data_fim">
+
+    <div style="margin-top:14px;">
+      <button formaction="{% url 'relatorios:relatorio_pdf' %}" class="btn-pri">Baixar PDF</button>
+      <button formaction="{% url 'relatorios:relatorio_excel' %}" class="btn-sec">Baixar Excel</button>
+    </div>
+  </form>
+{% endblock %}
