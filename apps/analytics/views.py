@@ -11,7 +11,7 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.views import View
 
-from .models import Evento  # ajuste para o modelo real usado no queryset
+from apps.acessos.models import RegistroAcesso
 from .services import usuarios_frequentes
 
 from django.utils.dateparse import parse_date
@@ -65,7 +65,7 @@ class FrequentesView(View):
                 status=400,
             )
 
-        queryset = Evento.objects.all()
+        queryset = RegistroAcesso.objects.all()
 
         if data_inicio:
             dt_inicio = self._parse_data(data_inicio)
