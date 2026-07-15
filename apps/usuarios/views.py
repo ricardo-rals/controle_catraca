@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomTokenObtainPairSerializer
+from apps.analytics import services as analytics_service
 
 
 # classe resposnsavel por listar os usuarios do sistema, apenas para o perfil admin.
@@ -164,21 +165,47 @@ def _contexto_dashboard(request):
 
 @login_required
 def dashboard(request):
-    from apps.analytics.services import picos_por_hora
+    """Dashboard - primeira tela após login (HU-032/037/033)."""
+    
+    from apps.analytics.services import picos_por_hora, total_de_acessos, volume_por_periodo
     from apps.acessos.models import RegistroAcesso
-
-    queryset = RegistroAcesso.objects.all()
-    picos_hora = picos_por_hora(queryset)
-    return render(request, "dashboard.html", {"picos_hora": picos_hora})
-    """Dashboard — primeira tela após login (HU-032/037).
-
-    Numa requisição normal devolve a página inteira. Numa requisição HTMX
-    (header HX-Request, disparada pelos filtros de período) devolve só o
-    fragmento dos widgets, trocado dentro de #dashboard-widgets sem recarregar.
-    """
+    
     contexto = _contexto_dashboard(request)
+    
+    queryset = contexto.get("queryset", RegistroAcesso.objects.all())
+    
+    
+    try:
+        total_acessos = total_de_acessos(queryset)
+    except Exception:
+        total_acessos = queryset.count() if queryset else None
+
+    try:
+        volumes = volume_por_periodo(queryset, "dia") 
+        media_diaria = sum(volumes) / len(volumes) if volumes else None
+    except Exception:
+        media_diaria = None
+
+    try:
+        horario_pico = picos_por_hora(queryset)
+    except Exception:
+        horario_pico = None
+
+    try:
+        pessoas_unicas = queryset.values("identificador_pseudonimizado").distinct().count()
+    except Exception:
+        pessoas_unicas = None
+
+    contexto.update({
+        "kpi_total_acessos": total_acessos,
+        "kpi_media_diaria": media_diaria,
+        "kpi_horario_pico": horario_pico,
+        "kpi_pessoas_unicas": pessoas_unicas,
+    })
+
     if request.headers.get("HX-Request"):
         return render(request, "partials/dashboard_widgets.html", contexto)
+        
     return render(request, "dashboard.html", contexto)
 
 
