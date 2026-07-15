@@ -146,6 +146,32 @@
   margin-bottom: 18px;
 }
 
+/* HU-036: Grid responsivo para gráficos de fluxo */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.chart-card {
+  background: #fff;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--sombra);
+  transition: transform .18s ease, box-shadow .18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+}
+
+.chart-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+
+/* Evita redimensionamento infinito do Chart.js */
+.chart-card canvas { width: 100% !important; height: 100% !important; max-height: 380px; }
+
 /* Gráfico de linha SVG */
 .linha-svg { width: 100%; height: 180px; }
 
@@ -223,4 +249,5 @@
 @media (max-width: 880px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .grid-graficos { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
 }

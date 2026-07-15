@@ -1,0 +1,25 @@
+{% extends "base_app.html" %}
+
+{% block titulo %}Relatórios{% endblock %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">Início / Relatórios</div>
+      <h1>Relatórios</h1>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;">
+    {% for rel in relatorios %}
+      <a href="{% url 'relatorios:detalhe' rel.slug %}"
+         class="card" style="text-decoration:none; color:inherit; display:block;">
+        <h3 style="margin-bottom:6px;">📄 {{ rel.nome }}</h3>
+        <div class="leg" style="min-height:38px;">{{ rel.descricao }}</div>
+        <span class="badge" style="margin-top:8px;">Abrir →</span>
+      </a>
+    {% empty %}
+      <p style="color:var(--cinza);">Nenhum relatório disponível.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

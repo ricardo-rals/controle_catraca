@@ -4,7 +4,7 @@ from .views import RelatoriosView, relatorio_pdf, relatorio_excel
 app_name = "relatorios"
 
 urlpatterns = [
-    path("", RelatoriosView.as_view(), name="relatorios"),
-    path("pdf/", relatorio_pdf, name="relatorio_pdf"),
-    path("excel/", relatorio_excel, name="relatorio_excel"),
+    path("", views.lista, name="lista"),
+    path("<slug:slug>/", views.detalhe, name="detalhe"),
+    path("<slug:slug>/export/<str:formato>/", views.exportar, name="exportar"),
 ]

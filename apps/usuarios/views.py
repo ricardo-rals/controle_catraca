@@ -9,6 +9,11 @@ from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.acessos.models import RegistroAcesso
+from apps.analytics.services import (
+    picos_por_hora,
+    total_de_acessos,
+    volume_por_periodo,
+)
 from django.views.generic import ListView
 from .mixins import PerfilRequeridoMixin, perfil_requerido
 from django.contrib.auth.views import LoginView
@@ -146,45 +151,44 @@ def _contexto_dashboard(request):
     if data_fim:
         queryset = queryset.filter(timestamp__date__lte=data_fim)
 
+    # KPIs (HU-033)
+    picos = picos_por_hora(queryset)
+    pico = max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    serie = volume_por_periodo(queryset, "dia")
+    media_diaria = round(sum(d["total"] for d in serie) / len(serie)) if serie else None
+
+    # HU-034 — série diária para o gráfico de linha (periodo é datetime → rótulo curto).
+    serie_volume = [
+        {"periodo": d["periodo"].strftime("%d/%m"), "total": d["total"]} for d in serie
+    ]
+
     return {
-        "queryset": queryset,  # base já filtrada para as HUs 033–036
+        "queryset": queryset,  # base já filtrada
         "data_inicio": data_inicio.isoformat() if data_inicio else "",
         "data_fim": data_fim.isoformat() if data_fim else "",
         "hoje": timezone.localdate().isoformat(),  # limite máximo dos campos de data
-        "total_acessos": None,
-        "media_diaria": None,
-        "horario_pico": None,
-        "pessoas_unicas": None,
-        "serie_volume": None,
-        "picos_hora": None,
-        "fluxo_tipo": None,
-        "fluxo_ponto": None,
+        "total_acessos": total_de_acessos(queryset),
+        "media_diaria": media_diaria,
+        "horario_pico": f"{pico['hora']:02d}h" if pico else None,
+        "pessoas_unicas": queryset.values("identificador_pseudonimizado")
+        .distinct()
+        .count(),
+        "serie_volume": serie_volume,  # HU-034 (gráfico de acessos ao longo do tempo)
+        "picos_hora": picos,  # HU-035 (gráfico de horários de pico)
     }
 
 
 @login_required
 def dashboard(request):
-    from apps.analytics.services import picos_por_hora
-    from apps.acessos.models import RegistroAcesso
+    """Dashboard — primeira tela após login (HU-032/033/035/036/037).
 
-    queryset = RegistroAcesso.objects.all()
-    picos_hora = picos_por_hora(queryset)
-    return render(request, "dashboard.html", {"picos_hora": picos_hora})
-    """Dashboard — primeira tela após login (HU-032/037).
-
-    Numa requisição normal devolve a página inteira. Numa requisição HTMX
-    (header HX-Request, disparada pelos filtros de período) devolve só o
-    fragmento dos widgets, trocado dentro de #dashboard-widgets sem recarregar.
+    Requisição normal → página inteira. Requisição HTMX (header HX-Request,
+    disparada pelos filtros de período) → só o fragmento de widgets.
     """
     contexto = _contexto_dashboard(request)
     if request.headers.get("HX-Request"):
         return render(request, "partials/dashboard_widgets.html", contexto)
     return render(request, "dashboard.html", contexto)
-
-
-@login_required
-def upload_arquivo(request):
-    pass  # ... código existente da view ...
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

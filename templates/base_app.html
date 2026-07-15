@@ -24,8 +24,8 @@
          class="{% if url_name == 'importar_csv' %}ativo{% endif %}">
         <span class="ic">📥</span> Importação
       </a>
-      <a href="{% url 'relatorios:relatorios' %}"
-        class="{% if request.resolver_match.namespace == 'relatorios' %}ativo{% endif %}">
+      <a href="{% url 'relatorios:lista' %}"
+         class="{% if request.resolver_match.namespace == 'relatorios' %}ativo{% endif %}">
         <span class="ic">📄</span> Relatórios
       </a>
 

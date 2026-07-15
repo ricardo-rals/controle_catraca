@@ -7,6 +7,9 @@ from django.utils import timezone
 from apps.acessos.models import PontoAcesso, RegistroAcesso
 from apps.analytics.services import total_de_acessos
 from apps.importacoes.models import Importacao
+from django.urls import reverse
+from django.test import Client
+from datetime import timedelta
 
 
 def _cria_registros(quantidade):
@@ -22,6 +25,37 @@ def _cria_registros(quantidade):
             timestamp=agora,
             importacao=imp,
         )
+
+
+@pytest.mark.django_db
+def test_dashboard_date_filter_applies(client):
+    user = get_user_model().objects.create_user(username="u2", password="pw")
+    ponto = PontoAcesso.objects.create(nome="P3", localizacao="L3")
+    imp = Importacao.objects.create(nome_arquivo="t3.csv", usuario=user)
+    now = timezone.now()
+    RegistroAcesso.objects.create(
+        identificador_pseudonimizado="b",
+        ponto_acesso=ponto,
+        tipo_acesso="Entrada",
+        timestamp=now - timedelta(days=10),
+        importacao=imp,
+    )
+    RegistroAcesso.objects.create(
+        identificador_pseudonimizado="c",
+        ponto_acesso=ponto,
+        tipo_acesso="Entrada",
+        timestamp=now,
+        importacao=imp,
+    )
+
+    c = Client()
+    c.login(username="u2", password="pw")
+    # filtra para período que inclui apenas o registro mais recente
+    data_inicio = (now - timedelta(days=1)).date().isoformat()
+    data_fim = now.date().isoformat()
+    resp = c.get(reverse("dashboard"), {"data_inicio": data_inicio, "data_fim": data_fim})
+    assert resp.status_code == 200
+    assert resp.context["total_acessos"] == 1
 
 
 @pytest.mark.django_db
