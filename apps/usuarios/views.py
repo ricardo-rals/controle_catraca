@@ -153,7 +153,9 @@ def _contexto_dashboard(request):
 
     # KPIs (HU-033)
     picos = picos_por_hora(queryset)
-    pico = max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    pico = (
+        max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    )
     serie = volume_por_periodo(queryset, "dia")
     media_diaria = round(sum(d["total"] for d in serie) / len(serie)) if serie else None
 
@@ -170,9 +172,7 @@ def _contexto_dashboard(request):
         "total_acessos": total_de_acessos(queryset),
         "media_diaria": media_diaria,
         "horario_pico": f"{pico['hora']:02d}h" if pico else None,
-        "pessoas_unicas": queryset.values("credencial_cifrada")
-        .distinct()
-        .count(),
+        "pessoas_unicas": queryset.values("credencial_cifrada").distinct().count(),
         "serie_volume": serie_volume,  # HU-034 (gráfico de acessos ao longo do tempo)
         "picos_hora": picos,  # HU-035 (gráfico de horários de pico)
     }

@@ -277,7 +277,9 @@ class ImportacaoService:
         for i in range(0, len(df), lote_size):
             lote = df.iloc[i : i + lote_size]
             q_objects = Q()
-            for row in lote[["credencial_cifrada", "timestamp_dt", "ponto_acesso_id"]].itertuples(index=False):
+            for row in lote[
+                ["credencial_cifrada", "timestamp_dt", "ponto_acesso_id"]
+            ].itertuples(index=False):
                 if pd.notna(row[2]):
                     q_objects |= Q(
                         credencial_cifrada=row[0],

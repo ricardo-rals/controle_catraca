@@ -59,7 +59,5 @@ class Command(BaseCommand):
             usuario.set_password(senha)
             usuario.save()
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"criado: {dados['username']} ({dados['perfil']})"
-                )
+                self.style.SUCCESS(f"criado: {dados['username']} ({dados['perfil']})")
             )

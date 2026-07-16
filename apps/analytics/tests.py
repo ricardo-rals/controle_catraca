@@ -53,7 +53,9 @@ def test_dashboard_date_filter_applies(client):
     # filtra para período que inclui apenas o registro mais recente
     data_inicio = (now - timedelta(days=1)).date().isoformat()
     data_fim = now.date().isoformat()
-    resp = c.get(reverse("dashboard"), {"data_inicio": data_inicio, "data_fim": data_fim})
+    resp = c.get(
+        reverse("dashboard"), {"data_inicio": data_inicio, "data_fim": data_fim}
+    )
     assert resp.status_code == 200
     assert resp.context["total_acessos"] == 1
 

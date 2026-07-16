@@ -30,16 +30,21 @@ class RegistroAcessoAdmin(admin.ModelAdmin):
     )
 
     def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
         termo = (search_term or "").strip()
         if not termo:
             return queryset, use_distinct
 
         from apps.importacoes.utils.pseudonimizacao import criptografar_valor
 
-        return queryset.filter(
-            credencial_cifrada=criptografar_valor(termo, deterministico=True)
-        ), use_distinct
+        return (
+            queryset.filter(
+                credencial_cifrada=criptografar_valor(termo, deterministico=True)
+            ),
+            use_distinct,
+        )
 
     @admin.display(description="Nome")
     def nome_exibicao(self, obj):

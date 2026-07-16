@@ -164,9 +164,7 @@ def _montar_frequentes(request):
     limite = cleaned.get("limite") or 20
 
     dados = usuarios_frequentes(qs, limite=limite)
-    linhas = [
-        [_credencial(request.user, d["credencial"]), d["total"]] for d in dados
-    ]
+    linhas = [[_credencial(request.user, d["credencial"]), d["total"]] for d in dados]
     resumo = [
         ("Usuários no ranking", len(dados)),
         ("Limite (top N)", limite),
@@ -189,7 +187,9 @@ def _montar_picos(request):
 
     picos = picos_por_hora(qs)
     linhas = [[f"{p['hora']:02d}h", p["total"]] for p in picos]
-    pico = max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    pico = (
+        max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    )
     tops = top_dias(qs)
     resumo = [
         ("Horário de pico", f"{pico['hora']:02d}h" if pico else "—"),

@@ -13,9 +13,7 @@ from weasyprint import HTML
 
 from .registry import RELATORIOS, get_relatorio
 
-XLSX_CONTENT_TYPE = (
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 PREVIEW_MAX = 50  # linhas mostradas na prévia (a exportação leva tudo)
 
 
