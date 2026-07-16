@@ -1,6 +1,5 @@
 from django.urls import path
-
-from . import views
+from .views import RelatoriosView, relatorio_pdf, relatorio_excel
 
 app_name = "relatorios"
 

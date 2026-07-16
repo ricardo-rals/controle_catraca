@@ -1,3 +1,11 @@
+from django.db.models.functions import (
+    TruncDay,
+    TruncWeek,
+    TruncMonth,
+    ExtractHour,
+    TruncDate,
+)
+
 """Serviço central de métricas analíticas (HU-027).
 
 Contrato comum das funções deste módulo:
@@ -13,13 +21,6 @@ Contrato comum das funções deste módulo:
 from typing import Any, Dict, List
 
 from django.db.models import Count, QuerySet
-from django.db.models.functions import (
-    ExtractHour,
-    TruncDate,
-    TruncDay,
-    TruncMonth,
-    TruncWeek,
-)
 
 from apps.acessos.models import RegistroAcesso
 
