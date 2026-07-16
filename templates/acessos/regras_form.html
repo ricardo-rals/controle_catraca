@@ -1,0 +1,37 @@
+{% extends "base_app.html" %}
+
+{% block titulo %}{% if object %}Editar regra{% else %}Nova regra{% endif %}{% endblock %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">
+        <a href="{% url 'acessos:regras_lista' %}" style="color:inherit;">Regras de Horário</a> /
+        {% if object %}editar{% else %}nova{% endif %}
+      </div>
+      <h1>{% if object %}Editar regra{% else %}Nova regra{% endif %}</h1>
+    </div>
+  </div>
+
+  <form method="post" class="card filtros-form" style="max-width:560px; padding:22px;">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="erros-form">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for campo in form %}
+      <div class="campo" style="margin-bottom:14px;">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.help_text %}<div class="leg">{{ campo.help_text }}</div>{% endif %}
+        {% if campo.errors %}<div class="erros-form">{{ campo.errors }}</div>{% endif %}
+      </div>
+    {% endfor %}
+
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <a href="{% url 'acessos:regras_lista' %}" class="btn-sec">Cancelar</a>
+      <button type="submit" class="btn-pri">Salvar</button>
+    </div>
+  </form>
+{% endblock %}

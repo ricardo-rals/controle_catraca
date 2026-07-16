@@ -1,4 +1,5 @@
 {% extends "base_app.html" %}
+{% load perfil_tags %}
 
 {% block titulo %}Detalhe do acesso{% endblock %}
 
@@ -48,9 +49,20 @@
   </div>
 
   <div class="grid-detalhe">
+    {% pode_ver_foto request.user as ver_dados_sensiveis %}
+    {% if ver_dados_sensiveis %}
+      <div class="campo-detalhe">
+        <span class="rotulo">Nome</span>
+        <span class="valor">{{ registro.nome_descriptografado|default:"—" }}</span>
+      </div>
+      <div class="campo-detalhe">
+        <span class="rotulo">Credencial</span>
+        <span class="valor id-mono" style="overflow-wrap:anywhere;">{{ registro.credencial_descriptografada|default:"—" }}</span>
+      </div>
+    {% endif %}
     <div class="campo-detalhe">
-      <span class="rotulo">Identificador pseudonimizado</span>
-      <span class="valor id-mono">{{ registro.identificador_pseudonimizado|truncatechars:16 }}</span>
+      <span class="rotulo">Credencial visível</span>
+      <span class="valor id-mono" style="overflow-wrap:anywhere;">{% credencial_visivel registro.credencial_cifrada request.user %}</span>
     </div>
     <div class="campo-detalhe">
       <span class="rotulo">Data e hora do evento</span>
@@ -87,7 +99,9 @@
     <div class="campo-detalhe">
       <span class="rotulo">Foto</span>
       <span class="valor">
-        {% if registro.foto and registro.foto != "Ver Imagem" %}
+        {% if not ver_dados_sensiveis %}
+          🔒 restrito ao administrador
+        {% elif registro.foto and registro.foto != "Ver Imagem" %}
           <a href="{{ registro.foto }}" target="_blank" rel="noopener">Ver imagem ↗</a>
         {% else %}
           —

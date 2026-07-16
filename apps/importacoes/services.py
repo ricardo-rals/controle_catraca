@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from apps.acessos.models import PontoAcesso, RegistroAcesso
-from .utils.pseudonimizacao import pseudonimizar_identificador
+from .utils.pseudonimizacao import criptografar_valor
 from .models import Importacao, FalhaImportacao
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ class ImportacaoService:
 
     # Cabeçalho real do export da catraca (Title-Case com espaços).
     COL_CREDENCIAL = "Número da Credencial"
+    COL_NOME = "Nome"
     COL_DATA = "Data do Evento"
     COL_EQUIPAMENTO = "Equipamento"
     COL_DIRECAO = "Direção do Evento"
@@ -128,6 +129,7 @@ class ImportacaoService:
 
         # Normaliza para os nomes internos usados pelo restante do pipeline.
         df["credencial"] = df[self.COL_CREDENCIAL]
+        df["nome"] = df.get(self.COL_NOME, "")
         df["timestamp"] = df[self.COL_DATA]
         df["ponto_acesso_nome"] = df.get(self.COL_EQUIPAMENTO)
         df["status_acesso"] = df.get(self.COL_DIRECAO, "")
@@ -169,9 +171,11 @@ class ImportacaoService:
             self._finalizar_importacao(df)
             return
 
-        # 3. Transformação 1 (LGPD): pseudônimo determinístico da credencial (HU-020)
-        df["identificador_pseudonimizado"] = df["credencial"].apply(
-            lambda x: pseudonimizar_identificador(str(x).strip())
+        df["credencial_cifrada"] = df["credencial"].apply(
+            lambda x: criptografar_valor(str(x).strip(), deterministico=True)
+        )
+        df["nome_cifrado"] = df["nome"].apply(
+            lambda x: criptografar_valor(str(x).strip()) if _texto_opcional(x) else ""
         )
 
         # 4. Transformação 2 (FK): Mapeie os nomes dos equipamentos (PontoAcesso).
@@ -221,7 +225,7 @@ class ImportacaoService:
         # 5. Duplicados Internos: Utilize drop_duplicates do Pandas
         antes_dedup = len(df)
         df.drop_duplicates(
-            subset=["identificador_pseudonimizado", "timestamp_dt", "ponto_acesso_id"],
+            subset=["credencial_cifrada", "timestamp_dt", "ponto_acesso_id"],
             inplace=True,
         )
         self.importacao.total_duplicados = antes_dedup - len(df)
@@ -246,6 +250,8 @@ class ImportacaoService:
                 RegistroAcesso.objects.bulk_update(
                     enriquecidos,
                     fields=[
+                        "credencial_cifrada",
+                        "nome_cifrado",
                         "tipo_acesso",
                         "evento",
                         "foto",
@@ -264,7 +270,7 @@ class ImportacaoService:
         self._inserir_no_banco(df)
 
     def _buscar_existentes(self, df):
-        """Retorna dict {(ident, timestamp_utc, ponto_id): RegistroAcesso} do banco
+        """Retorna dict {(cred_cifrada, timestamp_utc, ponto_id): RegistroAcesso} do banco
         para as tuplas do df, em lotes para não estourar o tamanho do WHERE."""
         existentes = {}
         lote_size = 900
@@ -272,17 +278,17 @@ class ImportacaoService:
             lote = df.iloc[i : i + lote_size]
             q_objects = Q()
             for row in lote[
-                ["identificador_pseudonimizado", "timestamp_dt", "ponto_acesso_id"]
+                ["credencial_cifrada", "timestamp_dt", "ponto_acesso_id"]
             ].itertuples(index=False):
                 if pd.notna(row[2]):
                     q_objects |= Q(
-                        identificador_pseudonimizado=row[0],
+                        credencial_cifrada=row[0],
                         timestamp=row[1],
                         ponto_acesso_id=row[2],
                     )
                 else:
                     q_objects |= Q(
-                        identificador_pseudonimizado=row[0],
+                        credencial_cifrada=row[0],
                         timestamp=row[1],
                         ponto_acesso__isnull=True,
                     )
@@ -290,7 +296,7 @@ class ImportacaoService:
                 continue
             for obj in RegistroAcesso.objects.filter(q_objects):
                 chave = (
-                    obj.identificador_pseudonimizado,
+                    obj.credencial_cifrada,
                     pd.Timestamp(obj.timestamp),
                     obj.ponto_acesso_id,
                 )
@@ -298,6 +304,8 @@ class ImportacaoService:
         return existentes
 
     _CAMPOS_ENRIQUECIVEIS = (
+        ("credencial_cifrada", "credencial_cifrada"),
+        ("nome_cifrado", "nome_cifrado"),
         ("status_acesso", "tipo_acesso"),
         ("evento", "evento"),
         ("foto", "foto"),
@@ -322,7 +330,7 @@ class ImportacaoService:
             if pd.notna(row["ponto_acesso_id"]):
                 ponto_id = int(row["ponto_acesso_id"])
             chave = (
-                row["identificador_pseudonimizado"],
+                row["credencial_cifrada"],
                 row["timestamp_dt"],
                 ponto_id,
             )
@@ -414,7 +422,8 @@ class ImportacaoService:
 
             registros.append(
                 RegistroAcesso(
-                    identificador_pseudonimizado=row["identificador_pseudonimizado"],
+                    credencial_cifrada=row["credencial_cifrada"],
+                    nome_cifrado=row["nome_cifrado"],
                     ponto_acesso_id=ponto_acesso_id,
                     tipo_acesso=row["status_acesso"],
                     timestamp=row["timestamp_dt"],

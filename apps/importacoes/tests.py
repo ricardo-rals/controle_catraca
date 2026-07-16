@@ -14,7 +14,10 @@ from django.contrib.auth import get_user_model
 from apps.acessos.models import RegistroAcesso
 from apps.importacoes.models import Importacao, FalhaImportacao
 from apps.importacoes.services import ImportacaoService
-from apps.importacoes.utils.pseudonimizacao import pseudonimizar_identificador
+from apps.importacoes.utils.pseudonimizacao import (
+    descriptografar_valor,
+    criptografar_valor,
+)
 
 User = get_user_model()
 
@@ -248,10 +251,27 @@ def test_campos_extras_e_grupo_do_equipamento_sao_persistidos():
     assert ponto.localizacao == "PORTARIA"
 
 
-def test_pseudonimizacao_deterministica(settings):
+def test_credencial_cifrada_deterministica(settings):
     settings.PSEUDONIMIZACAO_SALT = "salt_teste"
-    a = pseudonimizar_identificador("69591795")
-    b = pseudonimizar_identificador("69591795")
-    assert a == b  # determinístico: mesma credencial → mesmo hash
+    a = criptografar_valor("69591795", deterministico=True)
+    b = criptografar_valor("69591795", deterministico=True)
+    assert a == b  # determinístico: mesma credencial → mesmo valor cifrado
     assert a != "69591795"  # não é o valor original
-    assert len(a) == 64  # HMAC-SHA256 hexdigest
+    assert descriptografar_valor(a) == "69591795"
+
+
+@pytest.mark.django_db
+def test_importacao_persiste_credencial_e_nome_cifrados(settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
+    header = "Número da Credencial,Nome,Data do Evento,Equipamento,Direção do Evento"
+    linha = "111,Ana Maria,02/06/2026 08:00:00,CATRACA A,Entrada"
+
+    imp = _processar(io.StringIO(header + "\n" + linha))
+    reg = RegistroAcesso.objects.get(importacao=imp)
+
+    assert reg.credencial_cifrada
+    assert reg.nome_cifrado
+    assert reg.credencial_cifrada != "111"
+    assert reg.nome_cifrado != "Ana Maria"
+    assert descriptografar_valor(reg.credencial_cifrada) == "111"
+    assert descriptografar_valor(reg.nome_cifrado) == "Ana Maria"

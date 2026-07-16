@@ -12,7 +12,8 @@ class PontoAcessoAdmin(admin.ModelAdmin):
 class RegistroAcessoAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "identificador_pseudonimizado",
+        "nome_exibicao",
+        "credencial_exibicao",
         "ponto_acesso",
         "tipo_acesso",
         "timestamp",
@@ -21,8 +22,37 @@ class RegistroAcessoAdmin(admin.ModelAdmin):
         "evento",
     )
     list_filter = ("tipo_acesso", "timestamp", "ponto_acesso")
-    search_fields = ("identificador_pseudonimizado",)
+    search_fields = ()
     date_hierarchy = "timestamp"
+    readonly_fields = (
+        "nome_exibicao",
+        "credencial_exibicao",
+    )
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
+        termo = (search_term or "").strip()
+        if not termo:
+            return queryset, use_distinct
+
+        from apps.importacoes.utils.pseudonimizacao import criptografar_valor
+
+        return (
+            queryset.filter(
+                credencial_cifrada=criptografar_valor(termo, deterministico=True)
+            ),
+            use_distinct,
+        )
+
+    @admin.display(description="Nome")
+    def nome_exibicao(self, obj):
+        return obj.nome_descriptografado() or "—"
+
+    @admin.display(description="Credencial")
+    def credencial_exibicao(self, obj):
+        return obj.credencial_descriptografada() or "—"
 
 
 @admin.register(Pessoa)

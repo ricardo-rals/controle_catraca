@@ -34,6 +34,8 @@ from apps.analytics.services import (
     volume_por_periodo,
 )
 
+from apps.usuarios.perfis import credencial_para as _credencial
+
 from .forms import FrequentesForm, PeriodoForm, VolumeForm
 
 
@@ -54,14 +56,6 @@ def _rotulo_periodo(data_inicio, data_fim):
     if data_fim:
         return f"até {data_fim:%d/%m/%Y}"
     return "todos os registros"
-
-
-def _identificador(user, valor):
-    """Gestor vê só os 10 primeiros dígitos do hash + reticências; admin vê o
-    hash completo. (Futuro: admin poderá ver o nome descriptografado.)"""
-    if getattr(user, "perfil", None) == "gestor":
-        return f"{valor[:10]}..."
-    return valor
 
 
 def _queryset_periodo(cleaned):
@@ -90,7 +84,7 @@ def _montar_acessos(request):
 
     colunas = [
         "Data e hora",
-        "Identificador",
+        "Credencial",
         "Equipamento",
         "Grupo",
         "Direção",
@@ -102,7 +96,7 @@ def _montar_acessos(request):
         [
             # timestamp é tz-aware; formata como texto local (Excel/CSV não aceitam tz).
             timezone.localtime(r.timestamp).strftime("%d/%m/%Y %H:%M:%S"),
-            _identificador(request.user, r.identificador_pseudonimizado),
+            _credencial(request.user, r.credencial_cifrada),
             r.ponto_acesso.nome if r.ponto_acesso else "",
             (r.ponto_acesso.grupo_equipamento or "") if r.ponto_acesso else "",
             r.get_tipo_acesso_display(),
@@ -120,7 +114,7 @@ def _montar_acessos(request):
         ("Total de acessos", total),
         (
             "Pessoas únicas",
-            qs.values("identificador_pseudonimizado").distinct().count(),
+            qs.values("credencial_cifrada").distinct().count(),
         ),
         ("Horário de pico", f"{pico['hora']:02d}h" if pico else "—"),
     ]
@@ -163,16 +157,14 @@ def _montar_volume(request):
 
 
 def _montar_frequentes(request):
-    """Usuários (hash) com mais acessos no período."""
+    """Usuarios com mais acessos no periodo."""
     form = FrequentesForm(request.GET or None)
     cleaned = form.cleaned_data if form.is_valid() else {}
     qs = _queryset_periodo(cleaned)
     limite = cleaned.get("limite") or 20
 
     dados = usuarios_frequentes(qs, limite=limite)
-    linhas = [
-        [_identificador(request.user, d["identificador"]), d["total"]] for d in dados
-    ]
+    linhas = [[_credencial(request.user, d["credencial"]), d["total"]] for d in dados]
     resumo = [
         ("Usuários no ranking", len(dados)),
         ("Limite (top N)", limite),
@@ -181,7 +173,7 @@ def _montar_frequentes(request):
     return {
         "titulo": "Usuários mais frequentes",
         "periodo": _rotulo_periodo(cleaned.get("data_inicio"), cleaned.get("data_fim")),
-        "colunas": ["Identificador", "Total de acessos"],
+        "colunas": ["Credencial", "Total de acessos"],
         "linhas": linhas,
         "resumo": resumo,
     }
@@ -195,7 +187,9 @@ def _montar_picos(request):
 
     picos = picos_por_hora(qs)
     linhas = [[f"{p['hora']:02d}h", p["total"]] for p in picos]
-    pico = max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    pico = (
+        max(picos, key=lambda h: h["total"]) if any(h["total"] for h in picos) else None
+    )
     tops = top_dias(qs)
     resumo = [
         ("Horário de pico", f"{pico['hora']:02d}h" if pico else "—"),
