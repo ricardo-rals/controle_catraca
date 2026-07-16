@@ -18,7 +18,7 @@ como `FALHA` (nenhum registro é gravado).
 
 | Coluna no CSV | Uso no sistema |
 |---------------|----------------|
-| `Número da Credencial` | Pseudonimizada → `identificador_pseudonimizado` |
+| `Número da Credencial` | Cifrada deterministicamente → `credencial_cifrada` |
 | `Data do Evento` | `timestamp` do registro |
 | `Equipamento` | Mapeado para `PontoAcesso` (criado se não existir) |
 | `Direção do Evento` | `tipo_acesso` (Entrada/Saída) |
@@ -32,7 +32,7 @@ ou não persistidas — ver [lgpd.md](lgpd.md).
   registrada em `FalhaImportacao` com o número da linha e o motivo, **sem
   interromper** a importação das demais.
 - **Duplicada**: descartada quando a tupla
-  `(identificador_pseudonimizado, timestamp, ponto_acesso)` já aparece no próprio
+  `(credencial_cifrada, timestamp, ponto_acesso)` já aparece no próprio
   arquivo ou já existe no banco.
 - **Válida**: persistida em lote (`bulk_create`) como `RegistroAcesso`.
 

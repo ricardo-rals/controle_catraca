@@ -17,7 +17,7 @@
         <span class="ic">📊</span> Dashboard
       </a>
       <a href="{% url 'acessos:lista' %}"
-         class="{% if request.resolver_match.namespace == 'acessos' %}ativo{% endif %}">
+         class="{% if url_name == 'lista' or url_name == 'detalhe' %}ativo{% endif %}">
         <span class="ic">🔍</span> Consultas
       </a>
       <a href="{% url 'importar_csv' %}"
@@ -31,16 +31,19 @@
 
     </nav>
 
+    {% if request.user.perfil == 'admin' %}
     <div class="grupo-label">Administração</div>
     <nav>
       <a href="{% url 'listar_usuarios' %}"
          class="{% if url_name == 'listar_usuarios' or url_name == 'criar_usuario' %}ativo{% endif %}">
         <span class="ic">👥</span> Usuários
       </a>
-      <a href="#" class="desabilitado">
+      <a href="{% url 'acessos:regras_lista' %}"
+         class="{% if url_name and 'regras' in url_name %}ativo{% endif %}">
         <span class="ic">⏰</span> Regras de Horário
       </a>
     </nav>
+    {% endif %}
 
     <div class="user">
       <div class="av">

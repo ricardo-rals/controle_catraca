@@ -19,33 +19,44 @@ Apenas o **mínimo necessário** é persistido no banco (`RegistroAcesso`):
 
 | Campo de origem | No banco |
 |-----------------|----------|
-| Número da Credencial | **Pseudonimizado** — `identificador_pseudonimizado` |
-| Nome | **Não armazenado** |
-| Foto | **Não armazenada** |
+| Número da Credencial | **Cifrado** — `credencial_cifrada` |
+| Nome | **Cifrado** — `nome_cifrado` |
+| Foto | **Referência (URL) armazenada** — `foto` |
 | Data do Evento | `timestamp` |
 | Equipamento | `ponto_acesso` (FK) |
 | Direção do Evento | `tipo_acesso` (Entrada/Saída) |
 
-O **nome completo não é armazenado** no fluxo de importação. A credencial nunca é
-gravada em texto claro.
+A credencial nunca é gravada em texto claro. Ela fica armazenada apenas como
+valor cifrado reversível em `credencial_cifrada`, usando um modo determinístico
+para viabilizar deduplicação/cruzamento. O nome também não é gravado em
+texto claro: fica apenas em `nome_cifrado`. Na interface, **apenas o perfil admin vê a
+foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado**; o gestor vê o identificador
+truncado e não acessa a foto (ver seção 4).
 
 ## 3. Técnica de pseudonimização
 
-- O identificador é gerado por **HMAC-SHA256(credencial, salt)** — função
-  `pseudonimizar_identificador` em `apps/importacoes/utils/pseudonimizacao.py`.
 - O salt vem da variável de ambiente/segredo **`PSEUDONIMIZACAO_SALT`**, nunca
   versionado no repositório.
-- O resultado é **determinístico**: a mesma credencial sempre gera o mesmo
-  identificador, o que permite cruzar acessos da mesma pessoa e deduplicar
-  registros — **sem** ser possível reverter o hash para obter a credencial original.
+- O valor cifrado da credencial é **determinístico**: a mesma credencial sempre
+  gera o mesmo texto cifrado, o que permite cruzar acessos da mesma pessoa e
+  deduplicar registros sem armazenar texto claro.
 - Trocar o salt invalida o cruzamento histórico; ele deve ser estável por ambiente.
+- **Reversível sob autorização:** `credencial_cifrada` e `nome_cifrado` usam
+  chaves derivadas do segredo `PSEUDONIMIZACAO_SALT`; a credencial usa AES-SIV
+  (determinístico) e o nome usa AES-GCM (não determinístico).
 
 ## 4. Quem tem acesso
 
 - O acesso às telas internas exige autenticação (perfil **admin** ou **gestor**).
-- A gestão de usuários e o Django Admin são restritos ao perfil **admin**.
-- Como a credencial é pseudonimizada de forma irreversível, nem administradores
-  recuperam a matrícula original a partir do banco de acessos.
+- A gestão de usuários, as Regras de Horário e o Django Admin são restritos ao
+  perfil **admin**.
+- **Visibilidade de dados sensíveis por perfil:**
+  - **admin** — vê a foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado.
+  - **gestor** — **não** acessa a foto e vê o identificador **truncado**.
+- A visualização em texto claro para administradores vem dos campos cifrados
+  reversíveis.
+
+> A regra de visibilidade é aplicada no servidor (`apps/usuarios/perfis.py`).
 
 ## 5. Retenção e descarte
 
@@ -57,5 +68,6 @@ gravada em texto claro.
 ## 6. Solicitação de remoção
 
 Titulares podem solicitar informações ou remoção de dados pelos canais oficiais do
-IFBA. Como o identificador é irreversível, a localização de registros de um titular
-depende do recálculo do HMAC a partir da credencial informada pelo solicitante.
+IFBA. A localização de registros continua podendo usar o recálculo do HMAC a partir
+da credencial informada pelo solicitante; a conferência autorizada pode usar também
+os campos cifrados reversíveis armazenados no registro.

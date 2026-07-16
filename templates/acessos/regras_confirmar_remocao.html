@@ -1,0 +1,27 @@
+{% extends "base_app.html" %}
+
+{% block titulo %}Remover regra{% endblock %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">
+        <a href="{% url 'acessos:regras_lista' %}" style="color:inherit;">Regras de Horário</a> / remover
+      </div>
+      <h1>Remover regra</h1>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:560px; padding:22px;">
+    <p>Tem certeza que deseja remover esta regra?</p>
+    <p style="font-weight:600; margin:10px 0 18px;">{{ object }}</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex; gap:10px;">
+        <a href="{% url 'acessos:regras_lista' %}" class="btn-sec">Cancelar</a>
+        <button type="submit" class="btn-pri">Remover</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

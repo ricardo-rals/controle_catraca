@@ -2,6 +2,8 @@ import django_filters
 from django import forms
 from django.utils import timezone
 
+from apps.importacoes.utils.pseudonimizacao import criptografar_valor
+
 from .models import PontoAcesso, RegistroAcesso
 
 _DATE_WIDGET = forms.DateInput(attrs={"type": "date"})
@@ -13,10 +15,9 @@ class RegistroAcessoFilter(django_filters.FilterSet):
     Reutilizado pelo endpoint REST da HU-026 — não duplicar a lógica lá.
     """
 
-    identificador = django_filters.CharFilter(
-        field_name="identificador_pseudonimizado",
-        lookup_expr="icontains",
-        label="Identificador",
+    credencial = django_filters.CharFilter(
+        method="filter_credencial",
+        label="Credencial",
     )
     data_inicio = django_filters.DateFilter(
         field_name="timestamp",
@@ -44,12 +45,20 @@ class RegistroAcessoFilter(django_filters.FilterSet):
     class Meta:
         model = RegistroAcesso
         fields = [
-            "identificador",
+            "credencial",
             "data_inicio",
             "data_fim",
             "ponto_acesso",
             "tipo_acesso",
         ]
+
+    def filter_credencial(self, queryset, name, value):
+        termo = (value or "").strip()
+        if not termo:
+            return queryset
+        return queryset.filter(
+            credencial_cifrada=criptografar_valor(termo, deterministico=True)
+        )
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)

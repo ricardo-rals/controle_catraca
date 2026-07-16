@@ -1,8 +1,18 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import DetailView, ListView
+from django.urls import reverse_lazy
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
+
+from apps.usuarios.mixins import PerfilRequeridoMixin
 
 from .filters import RegistroAcessoFilter
-from .models import RegistroAcesso
+from .forms import RegraHorarioForm
+from .models import RegistroAcesso, RegraHorario
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -69,3 +79,35 @@ class DetalheAcessoView(LoginRequiredMixin, DetailView):
         # Se não vier (ex: acesso direto pela URL), cai para a home "/".
         context["voltar_url"] = self.request.META.get("HTTP_REFERER", "/")
         return context
+
+
+# --- Regras de Horário (CRUD, restrito ao perfil admin) --------------------
+# Horário de funcionamento por grupo de equipamento/dia; acessos fora dessas
+# faixas serão sinalizados como atípicos (consumido pela HU-053, Sprint 8).
+
+
+class _RegraAdminMixin(LoginRequiredMixin, PerfilRequeridoMixin):
+    perfil_requerido = "admin"
+    model = RegraHorario
+
+
+class RegraHorarioListView(_RegraAdminMixin, ListView):
+    template_name = "acessos/regras_lista.html"
+    context_object_name = "regras"
+
+
+class RegraHorarioCreateView(_RegraAdminMixin, CreateView):
+    form_class = RegraHorarioForm
+    template_name = "acessos/regras_form.html"
+    success_url = reverse_lazy("acessos:regras_lista")
+
+
+class RegraHorarioUpdateView(_RegraAdminMixin, UpdateView):
+    form_class = RegraHorarioForm
+    template_name = "acessos/regras_form.html"
+    success_url = reverse_lazy("acessos:regras_lista")
+
+
+class RegraHorarioDeleteView(_RegraAdminMixin, DeleteView):
+    template_name = "acessos/regras_confirmar_remocao.html"
+    success_url = reverse_lazy("acessos:regras_lista")
