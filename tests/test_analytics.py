@@ -34,7 +34,7 @@ def test_picos_por_hora_dados_esparsos():
     imp = _setup_importacao()
     # Inserir apenas 1 registro às 08h
     RegistroAcesso.objects.create(
-        identificador_pseudonimizado="hash123",
+        credencial_cifrada="cred-08h",
         tipo_acesso="Entrada",
         timestamp=timezone.make_aware(datetime(2026, 6, 2, 8, 30, 0)),
         importacao=imp,

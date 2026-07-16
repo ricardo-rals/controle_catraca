@@ -19,7 +19,7 @@ def _cria_registros(quantidade):
     agora = timezone.now()
     for i in range(quantidade):
         RegistroAcesso.objects.create(
-            identificador_pseudonimizado=f"{i:0>32}",
+            credencial_cifrada=f"cred-{i}",
             ponto_acesso=ponto,
             tipo_acesso="Entrada",
             timestamp=agora,
@@ -34,14 +34,14 @@ def test_dashboard_date_filter_applies(client):
     imp = Importacao.objects.create(nome_arquivo="t3.csv", usuario=user)
     now = timezone.now()
     RegistroAcesso.objects.create(
-        identificador_pseudonimizado="b",
+        credencial_cifrada="cred-b",
         ponto_acesso=ponto,
         tipo_acesso="Entrada",
         timestamp=now - timedelta(days=10),
         importacao=imp,
     )
     RegistroAcesso.objects.create(
-        identificador_pseudonimizado="c",
+        credencial_cifrada="cred-c",
         ponto_acesso=ponto,
         tipo_acesso="Entrada",
         timestamp=now,

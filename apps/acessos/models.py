@@ -1,5 +1,6 @@
 from django.db import models
 from apps.importacoes.models import Importacao
+from apps.importacoes.utils.pseudonimizacao import descriptografar_valor
 
 
 class Pessoa(models.Model):
@@ -46,9 +47,8 @@ class PontoAcesso(models.Model):
 
 
 class RegistroAcesso(models.Model):
-    # Critério 1 + Mapeamento DBML
-    # Aqui aplicaremos um Hash no numero_credencial antes de salvar para respeitar a LGPD
-    identificador_pseudonimizado = models.CharField(max_length=255)
+    credencial_cifrada = models.TextField(blank=True, default="")
+    nome_cifrado = models.TextField(blank=True, default="")
 
     ponto_acesso = models.ForeignKey(PontoAcesso, on_delete=models.SET_NULL, null=True)
 
@@ -94,8 +94,8 @@ class RegistroAcesso(models.Model):
         ordering = ["-timestamp"]
         indexes = [
             models.Index(
-                fields=["identificador_pseudonimizado", "timestamp"],
-                name="idx_ident_timestamp",
+                fields=["credencial_cifrada", "timestamp"],
+                name="idx_cred_timestamp",
             ),
             models.Index(
                 fields=["timestamp"],
@@ -108,7 +108,26 @@ class RegistroAcesso(models.Model):
         ]
 
     def __str__(self):
-        return f"Acesso {self.tipo_acesso} - Credencial {self.identificador_pseudonimizado[:8]}..."
+        credencial = self.credencial_descriptografada()
+        if credencial:
+            return f"Acesso {self.tipo_acesso} - Credencial {credencial}"
+        return f"Acesso {self.tipo_acesso} - Registro {self.pk}"
+
+    def credencial_descriptografada(self):
+        if not self.credencial_cifrada:
+            return ""
+        try:
+            return descriptografar_valor(self.credencial_cifrada)
+        except ValueError:
+            return ""
+
+    def nome_descriptografado(self):
+        if not self.nome_cifrado:
+            return ""
+        try:
+            return descriptografar_valor(self.nome_cifrado)
+        except ValueError:
+            return ""
 
 
 class RegraHorario(models.Model):

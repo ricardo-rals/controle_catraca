@@ -1,10 +1,3 @@
-from django.db.models.functions import (
-    TruncDay,
-    TruncWeek,
-    TruncMonth,
-    ExtractHour,
-    TruncDate,
-)
 """Serviço central de métricas analíticas (HU-027).
 
 Contrato comum das funções deste módulo:
@@ -55,20 +48,20 @@ def volume_por_periodo(queryset, granularidade: str) -> list[dict]:
 
 def usuarios_frequentes(queryset: QuerySet, limite: int = 20) -> list[dict]:
     """
-    Agrupa os registros por identificador_pseudonimizado e retorna os
-    usuarios com maior numero de ocorrencias no periodo informado.
+    Agrupa os registros por credencial cifrada e retorna os usuarios com maior
+    numero de ocorrencias no periodo informado.
 
-    Nunca resolve o identificador para nome/credencial - trabalha
-    apenas com o hash ja armazenado, preservando a privacidade.
+    A resolucao para exibicao fica na camada de apresentacao, respeitando o
+    perfil do usuario.
     """
     resultados = (
-        queryset.values("identificador_pseudonimizado")
+        queryset.values("credencial_cifrada")
         .annotate(total=Count("id"))
         .order_by("-total")[:limite]
     )
 
     return [
-        {"identificador": item["identificador_pseudonimizado"], "total": item["total"]}
+        {"credencial": item["credencial_cifrada"], "total": item["total"]}
         for item in resultados
     ]
 

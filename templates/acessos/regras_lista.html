@@ -1,0 +1,54 @@
+{% extends "base_app.html" %}
+
+{% block titulo %}Regras de Horário{% endblock %}
+
+{% block page_content %}
+  <div class="topbar">
+    <div>
+      <div class="migalha">Início / Administração / Regras de Horário</div>
+      <h1>Regras de Horário</h1>
+    </div>
+    <div class="acoes">
+      <a href="{% url 'acessos:regras_nova' %}" class="btn-pri">+ Nova regra</a>
+    </div>
+  </div>
+
+  <p class="leg" style="margin-bottom:14px;">
+    Faixa de funcionamento por grupo de equipamento e dia da semana. Acessos fora
+    dessas faixas são candidatos a serem sinalizados como atípicos.
+  </p>
+
+  <div class="tabela-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Grupo de equipamento</th>
+          <th>Dia da semana</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th style="width:1%;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for regra in regras %}
+          <tr>
+            <td>{{ regra.grupo_equipamento }}</td>
+            <td>{{ regra.get_dia_semana_display }}</td>
+            <td>{{ regra.horario_inicio|time:"H:i" }}</td>
+            <td>{{ regra.horario_fim|time:"H:i" }}</td>
+            <td style="white-space:nowrap;">
+              <a href="{% url 'acessos:regras_editar' regra.pk %}" class="btn-sec">Editar</a>
+              <a href="{% url 'acessos:regras_remover' regra.pk %}" class="btn-sec">Remover</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:32px; color:var(--cinza);">
+              Nenhuma regra cadastrada. Clique em <strong>+ Nova regra</strong>.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

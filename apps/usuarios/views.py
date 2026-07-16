@@ -170,7 +170,7 @@ def _contexto_dashboard(request):
         "total_acessos": total_de_acessos(queryset),
         "media_diaria": media_diaria,
         "horario_pico": f"{pico['hora']:02d}h" if pico else None,
-        "pessoas_unicas": queryset.values("identificador_pseudonimizado")
+        "pessoas_unicas": queryset.values("credencial_cifrada")
         .distinct()
         .count(),
         "serie_volume": serie_volume,  # HU-034 (gráfico de acessos ao longo do tempo)

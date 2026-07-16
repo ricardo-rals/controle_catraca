@@ -6,14 +6,15 @@ from django.utils import timezone
 
 from apps.acessos.models import PontoAcesso, RegistroAcesso
 from apps.importacoes.models import Importacao
+from apps.importacoes.utils.pseudonimizacao import criptografar_valor
 
 
-def _login(client):
+def _login(client, credencial="1234567890"):
     user = get_user_model().objects.create_user(username="r", password="x")
     imp = Importacao.objects.create(nome_arquivo="t.csv", usuario=user)
     ponto = PontoAcesso.objects.create(nome="P1", localizacao="L1")
     RegistroAcesso.objects.create(
-        identificador_pseudonimizado="a" * 32,
+        credencial_cifrada=criptografar_valor(credencial, deterministico=True),
         ponto_acesso=ponto,
         tipo_acesso="Entrada",
         timestamp=timezone.now(),
@@ -23,7 +24,8 @@ def _login(client):
 
 
 @pytest.mark.django_db
-def test_lista_relatorios(client):
+def test_lista_relatorios(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/")
     assert resp.status_code == 200
@@ -31,7 +33,8 @@ def test_lista_relatorios(client):
 
 
 @pytest.mark.django_db
-def test_detalhe_nao_busca_ao_abrir(client):
+def test_detalhe_nao_busca_ao_abrir(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/acessos/")
     assert resp.status_code == 200
@@ -41,7 +44,8 @@ def test_detalhe_nao_busca_ao_abrir(client):
 
 
 @pytest.mark.django_db
-def test_detalhe_busca_mostra_previa(client):
+def test_detalhe_busca_mostra_previa(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/acessos/?buscar=1")
     assert resp.status_code == 200
@@ -49,14 +53,15 @@ def test_detalhe_busca_mostra_previa(client):
 
 
 @pytest.mark.django_db
-def test_gestor_ve_identificador_truncado(client):
+def test_gestor_ve_identificador_truncado(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     gestor = get_user_model().objects.create_user(
         username="g", password="x", perfil="gestor"
     )
     imp = Importacao.objects.create(nome_arquivo="t.csv", usuario=gestor)
     ponto = PontoAcesso.objects.create(nome="P1", localizacao="L1")
     RegistroAcesso.objects.create(
-        identificador_pseudonimizado="a" * 64,
+        credencial_cifrada=criptografar_valor("1234567890", deterministico=True),
         ponto_acesso=ponto,
         tipo_acesso="Entrada",
         timestamp=timezone.now(),
@@ -64,18 +69,20 @@ def test_gestor_ve_identificador_truncado(client):
     )
     client.force_login(gestor)
     conteudo = client.get("/relatorios/acessos/?buscar=1").content.decode()
-    assert "aaaaaaaaaa..." in conteudo  # 10 chars + reticências
-    assert "a" * 64 not in conteudo  # hash completo não aparece p/ gestor
+    assert "******7890" in conteudo
+    assert "1234567890" not in conteudo
 
 
 @pytest.mark.django_db
-def test_detalhe_slug_inexistente_404(client):
+def test_detalhe_slug_inexistente_404(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     assert client.get("/relatorios/naoexiste/").status_code == 404
 
 
 @pytest.mark.django_db
-def test_export_pdf(client):
+def test_export_pdf(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/acessos/export/pdf/")
     assert resp.status_code == 200
@@ -84,7 +91,8 @@ def test_export_pdf(client):
 
 
 @pytest.mark.django_db
-def test_export_excel(client):
+def test_export_excel(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/acessos/export/excel/")
     assert resp.status_code == 200
@@ -93,7 +101,8 @@ def test_export_excel(client):
 
 
 @pytest.mark.django_db
-def test_export_csv(client):
+def test_export_csv(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     resp = client.get("/relatorios/acessos/export/csv/")
     assert resp.status_code == 200
@@ -102,7 +111,8 @@ def test_export_csv(client):
 
 
 @pytest.mark.django_db
-def test_export_formato_invalido_404(client):
+def test_export_formato_invalido_404(client, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     assert client.get("/relatorios/acessos/export/txt/").status_code == 404
 
@@ -114,7 +124,8 @@ def test_relatorios_exige_login(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("slug", ["volume", "frequentes", "picos", "fluxo"])
-def test_novos_relatorios_detalhe_e_exportacao(client, slug):
+def test_novos_relatorios_detalhe_e_exportacao(client, slug, settings):
+    settings.PSEUDONIMIZACAO_SALT = "salt_teste"
     _login(client)
     assert client.get(f"/relatorios/{slug}/").status_code == 200
     for formato in ("pdf", "excel", "csv"):
