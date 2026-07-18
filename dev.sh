@@ -13,6 +13,9 @@ case "$1" in
     createsuperuser)
         docker compose exec web python manage.py createsuperuser
         ;;
+    seed)
+        docker compose exec web python manage.py seed_usuarios
+        ;;
     precommit)
             docker compose exec -T web ruff check --fix .
             docker compose exec -T web black .
@@ -34,6 +37,7 @@ case "$1" in
         echo "  ./dev.sh migrate            roda as migracoes"
         echo "  ./dev.sh makemigrations     cria novas migracoes"
         echo "  ./dev.sh createsuperuser    cria um superusuario"
+        echo "  ./dev.sh seed               cria usuarios admin e gestor de dev"
         echo "  ./dev.sh precommit          roda o pre-commit"
         echo "  ./dev.sh test               roda os testes"
         echo "  ./dev.sh bash               abre terminal no container"
