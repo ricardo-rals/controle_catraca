@@ -6,9 +6,9 @@
 
 O Sistema CAC — Controle de Acesso do Campus é uma aplicação desenvolvida para analisar os dados das catracas eletrônicas do IFBA. Ele permite acompanhar acessos em tempo real, gerar relatórios personalizados e consultar estatísticas de uso, oferecendo uma visão clara e organizada da movimentação no campus.
 
-## Links Uteis
+## Link para video de demonstração
 
-- [Política de Pseudonimização e LGPD](docs/lgpd.md)
+- 
 
 ## 🖼️ Screenshots
 
