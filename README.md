@@ -24,32 +24,32 @@ Dashboard: visão geral dos acessos e estatísticas principais.
 
 ### Tela de Consultas
 
-![Consultas](docs/Telas/Consultas.png)
+![Consultas](docs/Telas/consultas.png)
 Consultas: Histórico completo dos eventos de acesso registrados pelas catracas, com filtros e exportação.
 
 ### Tela de Importações
 
-![Importações](docs/Telas/Importacao.png)
+![Importações](docs/Telas/importacao.png)
 Tela de Importações: Interface para carregar arquivos externos (ex.: CSV) e integrar dados de acessos ao sistema.
 
 ### Tela de Relatorios
 
-![Relatorios](docs/Telas/Relatorios.png)
+![Relatorios](docs/Telas/relatorios.png)
 Tela de Relatorios: visão geral dos acessos e estatísticas principais.
 
 ### Tela de Usuários
 
-![Usuários](docs/Telas/Usuario.png)
+![Usuários](docs/Telas/usuario.png)
 Tela de Usuários: Listagem de todos os usuários cadastrados, com opções de ativar, desativar ou editar informações.
 
-### Tela de Novo_Usuário
+### Tela de Novo Usuário
 
-![Novo_Usuário](docs/Telas/Novo_Usuario.png)
+![Novo_Usuário](docs/Telas/novo_usuario.png)
 Tela de Novo_Usuário: Formulário para criação de um novo usuário, incluindo dados pessoais e permissões de acesso.
 
 ### Tela de Regra de Horário
 
-![Horário](docs/Telas/Horario.png)
+![Horário](docs/Telas/horario.png)
 Tela de Horário: Consulta detalhada dos registros de entrada e saída, filtrados por período e usuário.
 
 ---
