@@ -5,7 +5,6 @@
 ## 📌 Descrição
 
 O Sistema CAC — Controle de Acesso do Campus é uma aplicação desenvolvida para analisar os dados das catracas eletrônicas do IFBA. Ele permite acompanhar acessos em tempo real, gerar relatórios personalizados e consultar estatísticas de uso, oferecendo uma visão clara e organizada da movimentação no campus.
-## Descrição
 
 ## Links Uteis
 
@@ -55,47 +54,6 @@ Tela de Horário: Consulta detalhada dos registros de entrada e saída, filtrado
 
 ---
 
-## ⚙️ Stack
-
-
-Backend: Django
-
-Banco de dados: PostgreSQL
-
-Infraestrutura: Docker
-
-Testes: Pytest
-
-Qualidade de código: Ruff + Black
-
----
-
-## 🚀 Setup resumido
-
-
-Para rodar o projeto em ambiente de desenvolvimento:
-
-```bash
-git clone https://github.com/SEU-USUARIO/controle-catraca.git
-cd controle-catraca
-cp .env.example .env
-./dev.sh up
-./dev.sh migrate
-./dev.sh seed   # popula o banco com dados de exemplo
-./dev.sh createsuperuser
-```
-
-Depois, acesse no navegador:
-
-Aplicação: http://localhost:8000 (localhost in Bing)
-
-Admin: http://localhost:8000/admin (localhost in Bing)
-
-## 📚 Documentação
-
-Toda a documentação detalhada está disponível na pasta [Parece que o resultado não era seguro para exibição. Vamos mudar as coisas e tentar outra opção!].
-Inclui guias de arquitetura, fluxo de dados, e instruções avançadas de uso.
-
 ## 📚 Documentação
 
 Toda a documentação detalhada está disponível na pasta [docs/](docs/).
@@ -103,25 +61,15 @@ Inclui guias de arquitetura, fluxo de dados e instruções avançadas de uso.
 
 - [Arquitetura](docs/arquitetura.md)
 - [Decisões técnicas](docs/decisoes.md)
-- [Instalação](docs/instalacao.md)
 - [LGPD e privacidade](docs/lgpd.md)
 - [Schema do banco](docs/schema.md)
-- [Protótipo de telas](docs/prototipo_telas_CAC.html)
 - [Prototipo de Telas](docs/prototipo_telas_CAC.html)
-
 - [Arquitetura](docs/arquitetura.md)
-
 - [Schema de Validação de CSV (Importação)](docs/schema.md)
-
 - [Instalação e execução](docs/instalacao.md)
-
 - [Guia de Desenvolvimento](docs/guia_de_desenvolvimento.md)
-
 - [Decisoes de arquitetura](docs/decisoes.md)
-
-
-## Screenshots
-
+  
 
 ## 🛠️ Stack
 
@@ -147,46 +95,23 @@ Inclui guias de arquitetura, fluxo de dados e instruções avançadas de uso.
 ### CI/CD
 - GitHub Actions
 
+## 🚀 Setup resumido
 
-## Funcionalidades
 
-## ⚙️ Setup
-
-### Clone o repositório
+Para rodar o projeto em ambiente de desenvolvimento:
 
 ```bash
-git clone https://github.com/ricardo-rals/controle_catraca.git
-```
-
-### Entre na pasta
-
-```bash
-cd controle_catraca
-```
-
-### Inicie os containers
-
-```bash
+git clone https://github.com/SEU-USUARIO/controle-catraca.git
+cd controle-catraca
+cp .env.example .env
 ./dev.sh up
-```
-
-### Execute as migrações
-
-```bash
 ./dev.sh migrate
+./dev.sh seed   # popula o banco com dados de exemplo
+./dev.sh createsuperuser
 ```
 
-### Popule o banco
+Depois, acesse no navegador:
 
-```bash
-./dev.sh seed
-```
+Aplicação: http://localhost:8000 (localhost in Bing)
 
-### Acesse o sistema
-- A aplicação: http://localhost:8000
-- A área administrativa: http://localhost:8000/admin
-
-## Estrutura do Projeto
-
-
-## Autores
+Admin: http://localhost:8000/admin (localhost in Bing)
