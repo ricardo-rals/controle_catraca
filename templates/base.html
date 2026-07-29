@@ -10,6 +10,15 @@
 </head>
 <body>
   {% block content %}{% endblock %}
+  {% if request.resolver_match.url_name == 'privacidade' %}
+      <a href="/" class="link-privacidade-flutuante">
+          Voltar para o Início
+      </a>
+  {% else %}
+      <a href="{% url 'privacidade' %}" class="link-privacidade-flutuante">
+          Privacidade e proteção de dados
+      </a>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

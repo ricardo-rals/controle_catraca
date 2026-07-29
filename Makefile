@@ -23,6 +23,10 @@ test:
 bash:
 	docker compose exec web bash
 
+seed:
+	docker compose exec web python manage.py seed
+
+
 # Atalho livre: make cmd="python manage.py shell"
 .PHONY: %
 %:
