@@ -456,6 +456,119 @@ tbody tr:hover { background: var(--bg); }
 }
 
 /* ====================================================
+   ALERTAS DE ANOMALIA (HU-053)
+   ==================================================== */
+.alertas-card {
+  border-left: 4px solid #f5a623;
+}
+
+.badge-alerta {
+  background-color: #f5a623;
+  color: #fff;
+}
+
+.lista-alertas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lista-alertas li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cinza-claro, #eee);
+  font-size: 14px;
+}
+
+.lista-alertas li:last-child {
+  border-bottom: none;
+}
+
+.alerta-data {
+  font-weight: 600;
+  min-width: 90px;
+}
+
+.alerta-tipo {
+  background-color: rgba(245, 166, 35, 0.15);
+  color: #8a5a00;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.alerta-detalhe {
+  color: var(--cinza, #666);
+  flex: 1 1 240px;
+}
+
+.aviso-perfil {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background-color: rgba(245, 166, 35, 0.10);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--cinza, #666);
+}
+
+.sem-dados-inline {
+  color: var(--cinza, #999);
+  font-style: italic;
+}
+
+/* Grupos da tela de anomalias: uma linha por pessoa/data, detalhe em <details>
+   nativo — sem JS para abrir e fechar. */
+.grupo-anomalia {
+  border: 1px solid var(--cinza-claro, #eee);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.grupo-anomalia summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.grupo-anomalia[open] summary {
+  border-bottom: 1px solid var(--cinza-claro, #eee);
+}
+
+.grupo-credencial {
+  font-weight: 600;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.grupo-numeros {
+  margin-left: auto;
+  color: var(--cinza, #666);
+  font-size: 13px;
+}
+
+.grupo-corpo {
+  padding: 12px 14px;
+}
+
+.grupo-pontos {
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--cinza, #666);
+}
+
+/* Passagem que disparou alerta, destacada dentro da sequência. */
+.passagem-anomala {
+  background-color: rgba(245, 166, 35, 0.08);
+}
+
+/* ====================================================
    RODAPÉ GLOBAL
    ==================================================== */
 .link-privacidade-flutuante {

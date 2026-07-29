@@ -1,11 +1,18 @@
 import csv
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+
+from apps.analytics.management.commands.detectar_anomalias import detectar_e_gravar
+
 from .forms import UploadCSVForm
 from .models import Importacao
 from .services import ImportacaoService
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -55,6 +62,16 @@ def importar_csv(request):
                     f"Não foi possível importar o arquivo: {importacao.motivo_erro}",
                 )
                 return redirect("importar_csv")
+
+            # HU-053: sem scheduler no projeto, a detecção roda aqui — o
+            # volume só muda quando alguém importa. Falha na detecção não
+            # invalida a importação, que já está persistida.
+            try:
+                detectar_e_gravar()
+            except Exception:
+                logger.exception(
+                    "Falha ao detectar anomalias após a importação %s", importacao.pk
+                )
 
             messages.success(
                 request,

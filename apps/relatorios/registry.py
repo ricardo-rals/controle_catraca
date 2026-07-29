@@ -36,7 +36,7 @@ from apps.analytics.services import (
 
 from apps.usuarios.perfis import credencial_para as _credencial
 
-from .forms import FrequentesForm, PeriodoForm, VolumeForm
+from .forms import AnomaliasForm, FrequentesForm, PeriodoForm, VolumeForm
 
 
 @dataclass
@@ -46,6 +46,7 @@ class Relatorio:
     descricao: str
     montar: Callable  # (request) -> dict (contrato acima)
     form_builder: Callable  # (request) -> form bound (filtros, sem buscar dados)
+    somente_admin: bool = False  # relatório com dado sensível por pessoa (HU-057)
 
 
 def _rotulo_periodo(data_inicio, data_fim):
@@ -226,6 +227,71 @@ def _montar_fluxo(request):
     }
 
 
+def _montar_anomalias(request):
+    """Anomalias detectadas, uma linha por ocorrência (HU-057).
+
+    Só chega aqui perfil admin — a view barra os demais —, mas a credencial
+    passa por `_credencial` do mesmo jeito: a regra de visibilidade mora num
+    lugar só, e nenhum relatório a reimplementa.
+    """
+    from apps.analytics.models import Alerta
+    from apps.analytics.views import (
+        agrupar_por_pessoa_e_data,
+        filtrar_alertas,
+        resumir_por_tipo,
+    )
+
+    form = AnomaliasForm(request.GET or None)
+    cleaned = form.cleaned_data if form.is_valid() else {}
+    alertas = filtrar_alertas(request.GET).order_by("-data", "tipo", "id")
+    grupos = agrupar_por_pessoa_e_data(alertas)
+
+    linhas = [
+        [
+            grupo["data"].strftime("%d/%m/%Y"),
+            (
+                _credencial(request.user, grupo["credencial_cifrada"])
+                if grupo["credencial_cifrada"]
+                else "Anomalia do dia inteiro"
+            ),
+            ", ".join(grupo["tipos"]),
+            grupo["total_passagens"],
+            grupo["total_ocorrencias"],
+            (
+                f"{grupo['menor_intervalo']:.0f}s"
+                if grupo["menor_intervalo"] is not None
+                else "—"
+            ),
+            ", ".join(grupo["pontos"]) or "—",
+        ]
+        for grupo in grupos
+    ]
+
+    resumo = [
+        ("Pessoas/dias com anomalia", len(grupos)),
+        ("Total de ocorrências", sum(g["total_ocorrencias"] for g in grupos)),
+    ] + [(item["rotulo"], item["total"]) for item in resumir_por_tipo(alertas)]
+
+    tipo = cleaned.get("tipo")
+    rotulo_tipo = dict(Alerta.Tipo.choices).get(tipo, "todos os tipos")
+
+    return {
+        "titulo": f"Anomalias detectadas ({rotulo_tipo})",
+        "periodo": _rotulo_periodo(cleaned.get("data_inicio"), cleaned.get("data_fim")),
+        "colunas": [
+            "Data",
+            "Credencial",
+            "Tipos",
+            "Passagens",
+            "Ocorrências",
+            "Menor intervalo",
+            "Pontos de acesso",
+        ],
+        "linhas": linhas,
+        "resumo": resumo,
+    }
+
+
 def _form_acessos(request):
     # queryset none() → o form renderiza sem buscar registros (só o dropdown de pontos).
     return RegistroAcessoFilter(
@@ -268,6 +334,15 @@ RELATORIOS = {
         "Acessos por ponto de acesso, com a composição por tipo (Entrada/Saída).",
         _montar_fluxo,
         lambda request: PeriodoForm(request.GET or None),
+    ),
+    "anomalias": Relatorio(
+        "anomalias",
+        "Anomalias detectadas",
+        "Volume atípico, acesso fora de horário e acesso repetido, com a "
+        "credencial de quem gerou cada ocorrência.",
+        _montar_anomalias,
+        lambda request: AnomaliasForm(request.GET or None),
+        somente_admin=True,
     ),
 }
 

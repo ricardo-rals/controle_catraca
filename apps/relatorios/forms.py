@@ -28,3 +28,9 @@ class FrequentesForm(PeriodoForm):
     limite = forms.IntegerField(
         required=False, min_value=1, initial=20, label="Limite (top N)"
     )
+
+
+# O relatório de anomalias usa exatamente o filtro da tela (HU-057): mesmos
+# campos, mesma validação. Reexportado aqui só para o registry achar junto com
+# os outros forms de relatório.
+from apps.analytics.forms import AnomaliasFiltroForm as AnomaliasForm  # noqa: E402,F401

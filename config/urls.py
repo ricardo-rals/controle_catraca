@@ -20,6 +20,11 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from apps.usuarios.views import dashboard
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.permissions import AllowAny
+
+# Urlconf isolado do schema público (HU-055): o Swagger de fora só documenta
+# o que está sob /api/public/, nunca as rotas internas.
+URLS_PUBLICAS = [path("api/public/", include("apps.analytics.public_urls"))]
 
 
 urlpatterns = [
@@ -34,6 +39,7 @@ urlpatterns = [
     path("importacoes/", include("apps.importacoes.urls")),
     path("acessos/", include("apps.acessos.urls")),
     path("relatorios/", include("apps.relatorios.urls")),
+    path("anomalias/", include("apps.analytics.web_urls")),
     path("api/analytics/", include("apps.analytics.urls")),
     path("api/", include("apps.acessos.api_urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -41,6 +47,26 @@ urlpatterns = [
         "api/schema/swagger-ui/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
+    ),
+    # API pública (HU-055): endpoints + doc navegável, ambos sem login.
+    path("api/public/", include("apps.analytics.public_urls")),
+    path(
+        "api/public/schema/",
+        SpectacularAPIView.as_view(
+            urlconf=URLS_PUBLICAS,
+            permission_classes=[AllowAny],
+            authentication_classes=[],
+        ),
+        name="schema-publico",
+    ),
+    path(
+        "api/public/docs/",
+        SpectacularSwaggerView.as_view(
+            url_name="schema-publico",
+            permission_classes=[AllowAny],
+            authentication_classes=[],
+        ),
+        name="swagger-publico",
     ),
     path("dashboard/", dashboard, name="dashboard"),
     path("", include("apps.usuarios.urls")),

@@ -3,6 +3,7 @@ from io import BytesIO
 
 import pandas as pd
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -11,16 +12,33 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 from weasyprint import HTML
 
+from apps.usuarios.perfis import is_admin
+
 from .registry import RELATORIOS, get_relatorio
 
 XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 PREVIEW_MAX = 50  # linhas mostradas na prévia (a exportação leva tudo)
 
 
+def _garantir_acesso(request, rel):
+    """Barra perfis não-admin nos relatórios marcados como sensíveis (HU-057)."""
+    if rel.somente_admin and not is_admin(request.user):
+        raise PermissionDenied(
+            "O relatório de anomalias identifica pessoas e é restrito ao "
+            "perfil Administrador. Comunique o administrador do sistema."
+        )
+
+
 @login_required
 def lista(request):
     """GET /relatorios/ — central com os relatórios disponíveis (HU-040)."""
-    return render(request, "relatorios/lista.html", {"relatorios": RELATORIOS.values()})
+    # Relatório restrito não aparece para quem não pode abri-lo.
+    disponiveis = [
+        rel
+        for rel in RELATORIOS.values()
+        if not rel.somente_admin or is_admin(request.user)
+    ]
+    return render(request, "relatorios/lista.html", {"relatorios": disponiveis})
 
 
 @login_required
@@ -31,6 +49,7 @@ def detalhe(request, slug):
     busca (parâmetro `buscar` — vem do "Filtrar" ou do "Buscar todos os dados").
     """
     rel = get_relatorio(slug)
+    _garantir_acesso(request, rel)
     contexto = {
         "rel": rel,
         "form": rel.form_builder(request),
@@ -48,6 +67,7 @@ def detalhe(request, slug):
 def exportar(request, slug, formato):
     """GET /relatorios/<slug>/export/<formato>/ — gera o arquivo com os filtros."""
     rel = get_relatorio(slug)
+    _garantir_acesso(request, rel)
     dados = rel.montar(request)
     nome = f"{slug}_{timezone.localdate():%Y%m%d}"
 
