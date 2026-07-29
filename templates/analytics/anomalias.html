@@ -1,0 +1,173 @@
+{% extends "base_app.html" %}
+{% load perfil_tags %}
+
+{% block titulo %}Anomalias{% endblock %}
+
+{% block page_content %}
+
+<div class="topbar">
+  <div>
+    <div class="migalha">Início / Anomalias</div>
+    <h1>Anomalias detectadas</h1>
+  </div>
+  <div class="acoes">
+    <a href="{% url 'anomalias:lista' %}" class="btn-sec">🧹 Limpar filtros</a>
+  </div>
+</div>
+
+<form method="get" class="card filtros-form" style="margin-bottom:18px; padding:18px 22px;">
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; align-items:end;">
+    <div class="campo" style="margin:0;">
+      <label for="id_tipo">Tipo de anomalia</label>
+      {{ form.tipo }}
+    </div>
+    <div class="campo" style="margin:0;">
+      <label for="id_data_inicio">Data início</label>
+      {{ form.data_inicio }}
+    </div>
+    <div class="campo" style="margin:0;">
+      <label for="id_data_fim">Data fim</label>
+      {{ form.data_fim }}
+    </div>
+  </div>
+  <div style="margin-top:14px; text-align:right;">
+    <button type="submit" class="btn-pri">Filtrar</button>
+  </div>
+</form>
+
+{% if pode_ver_detalhe %}
+  <div class="card">
+    <div class="cab">
+      <div>
+        <h3>Ocorrências</h3>
+        <div class="leg">
+          {{ total_anomalias }} anomalia{{ total_anomalias|pluralize }} no período,
+          agrupada{{ total_anomalias|pluralize }} por pessoa e data
+        </div>
+      </div>
+      {% if total_anomalias %}
+        <a class="btn-sec" href="{% url 'relatorios:detalhe' 'anomalias' %}?{{ querystring }}&buscar=1">
+          Gerar relatório
+        </a>
+      {% endif %}
+    </div>
+
+    {% if grupos %}
+      {% for grupo in grupos %}
+        <details class="grupo-anomalia">
+          <summary>
+            <span class="alerta-data">{{ grupo.data|date:"d/m/Y" }}</span>
+            <span class="grupo-credencial">
+              {% if grupo.credencial_cifrada %}
+                {% credencial_visivel grupo.credencial_cifrada request.user %}
+              {% else %}
+                <span class="sem-dados-inline">Anomalia do dia inteiro</span>
+              {% endif %}
+            </span>
+            {% for tipo in grupo.tipos %}
+              <span class="alerta-tipo">{{ tipo }}</span>
+            {% endfor %}
+            <span class="grupo-numeros">
+              {% if grupo.total_passagens %}
+                <strong>{{ grupo.total_passagens }}</strong> passage{{ grupo.total_passagens|pluralize:"m,ns" }}
+                {% if grupo.menor_intervalo != None %}
+                  em intervalo mínimo de {{ grupo.menor_intervalo|floatformat:0 }}s
+                {% endif %}
+                &middot;
+              {% endif %}
+              {{ grupo.total_ocorrencias }} ocorrência{{ grupo.total_ocorrencias|pluralize }}
+            </span>
+          </summary>
+
+          <div class="grupo-corpo">
+            {% if grupo.pontos %}
+              <div class="grupo-pontos">
+                Pontos envolvidos: {{ grupo.pontos|join:", " }}
+              </div>
+            {% endif %}
+
+            {% if grupo.passagens %}
+              <table class="tabela">
+                <thead>
+                  <tr>
+                    <th>Horário</th>
+                    <th>Intervalo</th>
+                    <th>Ponto de acesso</th>
+                    <th>Direção</th>
+                    <th>Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for passagem in grupo.passagens %}
+                    <tr class="{% if passagem.anomala %}passagem-anomala{% endif %}">
+                      <td>{{ passagem.horario|date:"H:i:s" }}</td>
+                      <td>
+                        {% if passagem.segundos_da_anterior != None %}
+                          +{{ passagem.segundos_da_anterior }}s
+                        {% else %}
+                          <span class="sem-dados-inline">1ª passagem</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ passagem.ponto|default:"—" }}</td>
+                      <td>{{ passagem.tipo_acesso|default:"—" }}</td>
+                      <td>
+                        {% for tipo in passagem.tipos %}
+                          <span class="alerta-tipo">{{ tipo }}</span>
+                        {% empty %}
+                          <span class="sem-dados-inline">Passagem da sequência</span>
+                        {% endfor %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <ul class="lista-alertas">
+                {% for alerta in grupo.ocorrencias %}
+                  <li>
+                    <span class="alerta-tipo">{{ alerta.get_tipo_display }}</span>
+                    <span class="alerta-detalhe">{{ alerta.detalhe }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </details>
+      {% endfor %}
+
+      {% if is_paginated %}
+        <div class="paginacao">
+          {% if page_obj.has_previous %}
+            <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+          {% endif %}
+          <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">Próxima</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="sem-dados">Nenhuma anomalia no período selecionado.</div>
+    {% endif %}
+  </div>
+
+{% else %}
+  <!-- Perfil sem permissão de detalhe: sabe que existe, não vê quem foi. -->
+  <div class="card alertas-card">
+    <div class="cab">
+      <h3>Detalhamento restrito</h3>
+    </div>
+    {% if total_anomalias %}
+      <p>
+        Foram detectadas <strong>{{ total_anomalias }}</strong> anomalia(s) no período
+        selecionado. A identificação das pessoas envolvidas é restrita ao perfil
+        <strong>Administrador</strong>.
+      </p>
+      <p><strong>Comunique o administrador do sistema</strong> para que o caso seja apurado.</p>
+    {% else %}
+      <p>Nenhuma anomalia foi detectada no período selecionado.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

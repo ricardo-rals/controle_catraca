@@ -10,6 +10,40 @@
   exibem "—" e os gráficos o estado "sem dados".
 {% endcomment %}
 
+{# HU-053/057: só o resumo por tipo. A lista identifica pessoas e vive em
+   /anomalias/, restrita ao admin. #}
+{% if total_anomalias %}
+<div class="card alertas-card" style="margin-bottom:18px;">
+  <div class="cab">
+    <div>
+      <h3>Anomalias detectadas</h3>
+      <div class="leg">Ocorrências fora do padrão no período selecionado</div>
+    </div>
+    <span class="badge badge-alerta">{{ total_anomalias }}</span>
+  </div>
+
+  <ul class="lista-alertas">
+    {% for item in resumo_anomalias %}
+      <li>
+        <span class="alerta-tipo">{{ item.rotulo }}</span>
+        <span class="alerta-detalhe">{{ item.total }} ocorrência{{ item.total|pluralize }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if request.user.perfil == 'admin' %}
+    <a class="btn-sec" href="{% url 'anomalias:lista' %}?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}">
+      Ver detalhes das anomalias
+    </a>
+  {% else %}
+    <p class="aviso-perfil">
+      O detalhamento é restrito ao perfil Administrador.
+      <strong>Comunique o administrador do sistema</strong> para apuração.
+    </p>
+  {% endif %}
+</div>
+{% endif %}
+
 <!-- KPIs -->
 <div class="kpis">
   <div class="kpi v1">

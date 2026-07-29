@@ -9,6 +9,8 @@ from .forms import UsuarioSistemaForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.acessos.models import RegistroAcesso
+from apps.analytics.models import Alerta
+from apps.analytics.views import resumir_por_tipo
 from apps.analytics.services import (
     picos_por_hora,
     total_de_acessos,
@@ -110,17 +112,43 @@ def reativar_usuario(request, usuario_id):
     return redirect("listar_usuarios")
 
 
+CHAVE_PERIODO_SESSAO = "dashboard_periodo"
+
+
 def _intervalo_do_periodo(request):
     """Lê data_inicio/data_fim (YYYY-MM-DD) da querystring → (data_inicio, data_fim).
 
     Os presets (7 dias, 30 dias, mês atual) são atalhos no front que só
     preenchem esses dois campos; o servidor sempre filtra por intervalo de datas.
-    Sem nenhum dos dois (primeira visita) → últimos 30 dias, para o dashboard
-    já abrir com um recorte útil e os campos preenchidos.
+
+    O último recorte usado fica na sessão: sair do dashboard e voltar pelo menu
+    (sem querystring) recupera a busca anterior em vez de resetar. Limpar os
+    dois campos e aplicar apaga essa memória e volta ao padrão de 30 dias.
     """
     hoje = timezone.localdate()
-    data_inicio = parse_date(request.GET.get("data_inicio") or "")
-    data_fim = parse_date(request.GET.get("data_fim") or "")
+    veio_na_url = "data_inicio" in request.GET or "data_fim" in request.GET
+
+    if veio_na_url:
+        bruto_inicio = request.GET.get("data_inicio") or ""
+        bruto_fim = request.GET.get("data_fim") or ""
+    else:
+        salvo = request.session.get(CHAVE_PERIODO_SESSAO) or {}
+        bruto_inicio = salvo.get("data_inicio") or ""
+        bruto_fim = salvo.get("data_fim") or ""
+
+    data_inicio = parse_date(bruto_inicio)
+    data_fim = parse_date(bruto_fim)
+
+    if veio_na_url:
+        if bruto_inicio or bruto_fim:
+            request.session[CHAVE_PERIODO_SESSAO] = {
+                "data_inicio": bruto_inicio,
+                "data_fim": bruto_fim,
+            }
+        else:
+            # Filtro limpo explicitamente: esquece o recorte anterior.
+            request.session.pop(CHAVE_PERIODO_SESSAO, None)
+
     if not data_inicio and not data_fim:
         return hoje - timedelta(days=29), hoje
     # Nunca depois de hoje (protege contra datas futuras vindas da URL).
@@ -164,6 +192,14 @@ def _contexto_dashboard(request):
         {"periodo": d["periodo"].strftime("%d/%m"), "total": d["total"]} for d in serie
     ]
 
+    # HU-053/057 — o dashboard mostra só o resumo por tipo; a lista (que
+    # identifica pessoas) vive na tela de anomalias, restrita ao admin.
+    alertas = Alerta.objects.all()
+    if data_inicio:
+        alertas = alertas.filter(data__gte=data_inicio)
+    if data_fim:
+        alertas = alertas.filter(data__lte=data_fim)
+
     return {
         "queryset": queryset,  # base já filtrada
         "data_inicio": data_inicio.isoformat() if data_inicio else "",
@@ -174,6 +210,8 @@ def _contexto_dashboard(request):
         "horario_pico": f"{pico['hora']:02d}h" if pico else None,
         "pessoas_unicas": queryset.values("credencial_cifrada").distinct().count(),
         "serie_volume": serie_volume,  # HU-034 (gráfico de acessos ao longo do tempo)
+        "resumo_anomalias": resumir_por_tipo(alertas),  # HU-053/057
+        "total_anomalias": alertas.count(),
         "picos_hora": picos,  # HU-035 (gráfico de horários de pico)
     }
 

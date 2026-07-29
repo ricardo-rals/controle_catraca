@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% with url_name=request.resolver_match.url_name %}
+
+{% with url_name=request.resolver_match.url_name espaco=request.resolver_match.namespace %}
 <div class="app">
 
   <!-- ======= SIDEBAR ======= -->
@@ -17,7 +18,7 @@
         <span class="ic">📊</span> Dashboard
       </a>
       <a href="{% url 'acessos:lista' %}"
-         class="{% if url_name == 'lista' or url_name == 'detalhe' %}ativo{% endif %}">
+         class="{% if espaco == 'acessos' and 'regras' not in url_name %}ativo{% endif %}">
         <span class="ic">🔍</span> Consultas
       </a>
       <a href="{% url 'importar_csv' %}"
@@ -25,8 +26,14 @@
         <span class="ic">📥</span> Importação
       </a>
       <a href="{% url 'relatorios:lista' %}"
-         class="{% if request.resolver_match.namespace == 'relatorios' %}ativo{% endif %}">
+         class="{% if espaco == 'relatorios' %}ativo{% endif %}">
         <span class="ic">📄</span> Relatórios
+      </a>
+      {# Visível para todos: o gestor precisa saber que existe anomalia para
+         escalar. Quem gerou cada uma, só o admin vê (HU-057). #}
+      <a href="{% url 'anomalias:lista' %}"
+         class="{% if espaco == 'anomalias' %}ativo{% endif %}">
+        <span class="ic">⚠️</span> Anomalias
       </a>
 
     </nav>
@@ -39,7 +46,7 @@
         <span class="ic">👥</span> Usuários
       </a>
       <a href="{% url 'acessos:regras_lista' %}"
-         class="{% if url_name and 'regras' in url_name %}ativo{% endif %}">
+         class="{% if espaco == 'acessos' and 'regras' in url_name %}ativo{% endif %}">
         <span class="ic">⏰</span> Regras de Horário
       </a>
     </nav>
