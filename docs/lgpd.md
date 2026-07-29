@@ -19,9 +19,9 @@ Apenas o **mínimo necessário** é persistido no banco (`RegistroAcesso`):
 
 | Campo de origem | No banco |
 |-----------------|----------|
-| Número da Credencial | **Cifrado** — `credencial_cifrada` |
-| Nome | **Cifrado** — `nome_cifrado` |
-| Foto | **Referência (URL) armazenada** — `foto` |
+| Número da Credencial | **Cifrado** em `credencial_cifrada` |
+| Nome | **Cifrado** em `nome_cifrado` |
+| Foto | **Referência (URL) armazenada** em `foto` |
 | Data do Evento | `timestamp` |
 | Equipamento | `ponto_acesso` (FK) |
 | Direção do Evento | `tipo_acesso` (Entrada/Saída) |
@@ -51,8 +51,8 @@ truncado e não acessa a foto (ver seção 4).
 - A gestão de usuários, as Regras de Horário e o Django Admin são restritos ao
   perfil **admin**.
 - **Visibilidade de dados sensíveis por perfil:**
-  - **admin** — vê a foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado.
-  - **gestor** — **não** acessa a foto e vê o identificador **truncado**.
+  - **admin:** vê a foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado.
+  - **gestor:** **não** acessa a foto e vê o identificador **truncado**.
 - A visualização em texto claro para administradores vem dos campos cifrados
   reversíveis.
 
@@ -68,6 +68,9 @@ truncado e não acessa a foto (ver seção 4).
 ## 6. Solicitação de remoção
 
 Titulares podem solicitar informações ou remoção de dados pelos canais oficiais do
-IFBA. A localização de registros continua podendo usar o recálculo do HMAC a partir
-da credencial informada pelo solicitante; a conferência autorizada pode usar também
-os campos cifrados reversíveis armazenados no registro.
+IFBA. Para localizar os registros de um titular, a credencial informada pelo
+solicitante é cifrada com AES-SIV (determinístico) e o resultado é comparado com o
+campo `credencial_cifrada`. Como a cifra é determinística, a mesma credencial sempre
+produz o mesmo valor, o que permite a busca sem descriptografar a base inteira. A
+conferência autorizada pode usar também `nome_cifrado`, descriptografado pelo perfil
+admin.

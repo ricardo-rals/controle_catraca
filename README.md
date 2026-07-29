@@ -6,9 +6,9 @@
 
 O Sistema CAC — Controle de Acesso do Campus é uma aplicação desenvolvida para analisar os dados das catracas eletrônicas do IFBA. Ele permite acompanhar acessos em tempo real, gerar relatórios personalizados e consultar estatísticas de uso, oferecendo uma visão clara e organizada da movimentação no campus.
 
-## Link para video de demonstração
+## 🎬 Vídeo de demonstração
 
-- 
+_Em produção (HU-046) — o link será publicado aqui._
 
 ## 🖼️ Screenshots
 
@@ -59,17 +59,13 @@ Tela de Horário: Consulta detalhada dos registros de entrada e saída, filtrado
 Toda a documentação detalhada está disponível na pasta [docs/](docs/).
 Inclui guias de arquitetura, fluxo de dados e instruções avançadas de uso.
 
-- [Arquitetura](docs/arquitetura.md)
-- [Decisões técnicas](docs/decisoes.md)
-- [LGPD e privacidade](docs/lgpd.md)
-- [Schema do banco](docs/schema.md)
-- [Prototipo de Telas](docs/prototipo_telas_CAC.html)
-- [Arquitetura](docs/arquitetura.md)
-- [Schema de Validação de CSV (Importação)](docs/schema.md)
 - [Instalação e execução](docs/instalacao.md)
-- [Guia de Desenvolvimento](docs/guia_de_desenvolvimento.md)
-- [Decisoes de arquitetura](docs/decisoes.md)
-  
+- [Arquitetura](docs/arquitetura.md)
+- [Decisões de arquitetura (ADRs)](docs/decisoes.md)
+- [LGPD e privacidade](docs/lgpd.md)
+- [Schema de validação de CSV (importação)](docs/schema.md)
+- [Guia de desenvolvimento](docs/guia_de_desenvolvimento.md)
+- [Protótipo de telas](docs/prototipo_telas_CAC.html)
 
 ## 🛠️ Stack
 
@@ -101,8 +97,8 @@ Inclui guias de arquitetura, fluxo de dados e instruções avançadas de uso.
 Para rodar o projeto em ambiente de desenvolvimento:
 
 ```bash
-git clone https://github.com/SEU-USUARIO/controle-catraca.git
-cd controle-catraca
+git clone https://github.com/ricardo-rals/controle_catraca.git
+cd controle_catraca
 cp .env.example .env
 ./dev.sh up
 ./dev.sh migrate
@@ -112,6 +108,6 @@ cp .env.example .env
 
 Depois, acesse no navegador:
 
-Aplicação: http://localhost:8000 (localhost in Bing)
-
-Admin: http://localhost:8000/admin (localhost in Bing)
+- Aplicação: <http://localhost:8000>
+- Admin: <http://localhost:8000/admin>
+- Privacidade (pública, sem login): <http://localhost:8000/privacidade/>
