@@ -12,24 +12,103 @@
   </div>
 
   <div class="card">
+    <p>
+      Este aviso explica, em linguagem simples, quais dados o Sistema CAC guarda sobre
+      as passagens pelas catracas do campus, por que eles são guardados e quem pode vê-los.
+    </p>
+
     <div class="cab">
-      <h3>1. Coleta</h3>
+      <h3>1. O que coletamos</h3>
     </div>
-    <p>Os dados de acesso provenientes das catracas do campus são recebidos e armazenados de forma <strong>anonimizada e/ou pseudonimizada</strong>. Isso significa que informações sensíveis não ficam diretamente expostas no sistema, garantindo maior segurança à sua identidade.</p>
-    
+    <p>
+      A cada passagem pela catraca, o sistema registra <strong>data e hora</strong>, o
+      <strong>ponto de acesso</strong> utilizado e a <strong>direção</strong> (entrada ou saída).
+    </p>
+    <p>
+      De cada pessoa, o sistema guarda o <strong>número da credencial</strong> (matrícula) e o
+      <strong>nome</strong>, ambos armazenados <strong>cifrados</strong> e nunca em texto legível
+      no banco de dados, além da referência à foto do crachá. Nenhum outro dado pessoal é coletado.
+    </p>
+
     <br>
-    
+
     <div class="cab">
-      <h3>2. Uso</h3>
+      <h3>2. Por que coletamos</h3>
     </div>
-    <p>As informações coletadas são utilizadas <strong>exclusivamente</strong> para a análise de fluxo de pessoas e geração de relatórios administrativos do campus, ajudando na gestão e segurança institucional.</p>
-    
+    <p>
+      Os dados são usados <strong>exclusivamente</strong> para a gestão e a segurança do campus:
+      acompanhar o fluxo de pessoas, produzir estatísticas de uso e gerar relatórios
+      administrativos. Não são usados para nenhuma outra finalidade, nem compartilhados com
+      terceiros.
+    </p>
+
     <br>
-    
+
     <div class="cab">
-      <h3>3. Descarte</h3>
+      <h3>3. Como protegemos</h3>
     </div>
-    <p>Os registros são mantidos de acordo com as políticas de retenção da instituição. Após o período necessário para as finalidades de gestão, os dados e importações associadas são removidos de forma segura e definitiva do sistema.</p>
+    <p>
+      Credencial e nome são cifrados antes de serem gravados. A chave usada nessa cifra fica
+      guardada como segredo do servidor, fora do código do sistema. Sem ela, os dados no banco
+      não têm significado.
+    </p>
+    <p>
+      Sendo transparente: essa cifra é <strong>reversível</strong>. Ela protege os dados contra
+      quem não deveria vê-los, mas <strong>administradores autorizados conseguem, sim, visualizar
+      a credencial e o nome originais</strong>. Isso é necessário para que a instituição possa
+      apurar uma ocorrência e atender pedidos do próprio titular.
+    </p>
+    <p>
+      Quem vê o quê:
+    </p>
+    <ul>
+      <li><strong>Administradores:</strong> veem a credencial e o nome completos, além da foto.</li>
+      <li><strong>Gestores:</strong> veem apenas a credencial <strong>parcial</strong> (últimos dígitos),
+        <strong>sem</strong> o nome e <strong>sem</strong> a foto.</li>
+    </ul>
+    <p>
+      Essa separação é aplicada no servidor: o dado completo nunca chega ao navegador de quem
+      não tem permissão para vê-lo.
+    </p>
+
+    <br>
+
+    <div class="cab">
+      <h3>4. Por quanto tempo guardamos</h3>
+    </div>
+    <p>
+      Os registros são mantidos pelo período necessário às finalidades de gestão do campus,
+      conforme o prazo definido pela instituição. Não há descarte automático: a remoção é feita
+      pela administração e, ao excluir uma importação, todos os registros de acesso vinculados a
+      ela são apagados junto, de forma definitiva.
+    </p>
+
+    <br>
+
+    <div class="cab">
+      <h3>5. Seus direitos</h3>
+    </div>
+    <p>
+      A LGPD garante a você o direito de saber quais dados seus estão registrados, pedir a
+      correção de informações incorretas e solicitar a remoção dos seus registros.
+    </p>
+    <p>
+      Para exercer qualquer um desses direitos, procure os canais oficiais do IFBA:
+      <!-- HU-043: substituir pelo canal real (Ouvidoria / Encarregado de Dados do campus). -->
+      <strong>[preencher: e-mail do Encarregado de Dados / Ouvidoria do campus]</strong>.
+      Informe o número da sua credencial para que o registro possa ser localizado.
+    </p>
+
+    <br>
+
+    <div class="cab">
+      <h3>6. Atualizações deste aviso</h3>
+    </div>
+    <p>
+      Este aviso pode ser revisado sempre que houver mudança na forma como os dados são tratados.
+      <br>
+      <strong>Última atualização:</strong> 28 de julho de 2026.
+    </p>
   </div>
 </main>
 {% endblock %}
