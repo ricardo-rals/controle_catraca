@@ -153,7 +153,11 @@
   gap: 16px;
   align-items: stretch;
 }
-
+@media (max-width: 767px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .chart-card {
   background: #fff;
   border: 1px solid var(--linha);

@@ -1,73 +1,84 @@
 # Política de Pseudonimização e LGPD
 
-Este documento descreve como o sistema de Controle de Acesso do Campus (CAC) trata
-dados pessoais provenientes das catracas, em conformidade com a LGPD (Lei 13.709/2018).
+Este documento descreve como o sistema de Controle de Acesso do Campus (CAC) trata dados pessoais provenientes das catracas, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
 
-## 1. Dados coletados
+## 1. Dados Coletados
 
-O arquivo exportado da catraca contém, entre outros, os seguintes campos pessoais:
+O arquivo exportado da catraca contém, entre outros, os seguintes campos de identificação pessoal e de tráfego:
 
-- Número da Credencial (matrícula)
-- Nome
+- Número da Credencial (matrícula ou identificador de acesso)
+- Nome do portador
 - Estrutura Organizacional
-- Foto (referência)
-- Data e direção do evento, equipamento e ponto de acesso
+- Foto (referência/caminho da imagem)
+- Data e direção do evento (Entrada/Saída), equipamento utilizado e ponto de acesso
 
-## 2. O que é armazenado e o que é pseudonimizado
+## 2. Armazenamento e Cifragem
 
-Apenas o **mínimo necessário** é persistido no banco (`RegistroAcesso`):
+Para garantir a segurança da informação e a privacidade dos titulares, o sistema armazena apenas o mínimo necessário no banco de dados (`RegistroAcesso`). Dados de identificação direta nunca são gravados em texto claro:
 
-| Campo de origem | No banco |
-|-----------------|----------|
-| Número da Credencial | **Cifrado** — `credencial_cifrada` |
-| Nome | **Cifrado** — `nome_cifrado` |
-| Foto | **Referência (URL) armazenada** — `foto` |
-| Data do Evento | `timestamp` |
-| Equipamento | `ponto_acesso` (FK) |
-| Direção do Evento | `tipo_acesso` (Entrada/Saída) |
+| Campo de Origem | No Banco de Dados | Técnica de Proteção |
+| :--- | :--- | :--- |
+| **Número da Credencial** | `credencial_cifrada` | Cifrada de forma determinística (AES-SIV) |
+| **Nome** | `nome_cifrado` | Cifrado de forma não-determinística (AES-GCM) |
+| **Foto** | `foto` | Referência/URL em texto claro (acesso restrito por perfil na aplicação) |
+| **Estrutura Organizacional** | `estrutura_organizacional` | Texto claro (armazenado na tabela `Pessoa`) |
+| **Data do Evento** | `timestamp` | Datetime (`DateTimeField`) |
+| **Equipamento/Ponto** | `ponto_acesso` | Chave Estrangeira (`ForeignKey`) |
+| **Direção do Evento** | `tipo_acesso` | Texto claro ("Entrada" / "Saída") |
 
-A credencial nunca é gravada em texto claro. Ela fica armazenada apenas como
-valor cifrado reversível em `credencial_cifrada`, usando um modo determinístico
-para viabilizar deduplicação/cruzamento. O nome também não é gravado em
-texto claro: fica apenas em `nome_cifrado`. Na interface, **apenas o perfil admin vê a
-foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado**; o gestor vê o identificador
-truncado e não acessa a foto (ver seção 4).
+> A credencial e o nome permanecem cifrados no banco de dados. A descriptografia ocorre sob demanda na camada de aplicação e apenas para usuários autenticados com nível de acesso adequado (`admin`).
 
-## 3. Técnica de pseudonimização
+## 3. Técnica de Proteção e Cifragem
 
-- O salt vem da variável de ambiente/segredo **`PSEUDONIMIZACAO_SALT`**, nunca
-  versionado no repositório.
-- O valor cifrado da credencial é **determinístico**: a mesma credencial sempre
-  gera o mesmo texto cifrado, o que permite cruzar acessos da mesma pessoa e
-  deduplicar registros sem armazenar texto claro.
-- Trocar o salt invalida o cruzamento histórico; ele deve ser estável por ambiente.
-- **Reversível sob autorização:** `credencial_cifrada` e `nome_cifrado` usam
-  chaves derivadas do segredo `PSEUDONIMIZACAO_SALT`; a credencial usa AES-SIV
-  (determinístico) e o nome usa AES-GCM (não determinístico).
+O sistema implementa criptografia simétrica reversível utilizando duas abordagens para chaves derivadas do segredo de ambiente **`PSEUDONIMIZACAO_SALT`**:
 
-## 4. Quem tem acesso
+1. **Cifragem Determinística (AES-SIV de 512 bits)**:
+   * **Aplicação**: Utilizada no campo `credencial_cifrada`.
+   * **Funcionamento**: A mesma credencial original sempre gerará o mesmo texto cifrado.
+   * **Finalidade**: Permite que o sistema realize deduplicação, contagem de pessoas únicas e cruzamento de registros do mesmo titular entre diferentes importações sem expor o valor original e sem necessitar de uma coluna de hash irreversível.
 
-- O acesso às telas internas exige autenticação (perfil **admin** ou **gestor**).
-- A gestão de usuários, as Regras de Horário e o Django Admin são restritos ao
-  perfil **admin**.
-- **Visibilidade de dados sensíveis por perfil:**
-  - **admin** — vê a foto (referência), o identificador completo, a credencial descriptografada e o nome descriptografado.
-  - **gestor** — **não** acessa a foto e vê o identificador **truncado**.
-- A visualização em texto claro para administradores vem dos campos cifrados
-  reversíveis.
+2. **Cifragem Não-Determinística (AES-GCM de 256 bits)**:
+   * **Aplicação**: Utilizada no campo `nome_cifrado`.
+   * **Funcionamento**: Utiliza um vector de inicialização (nonce) de 12 bytes gerado de forma aleatória a cada gravação. A mesma entrada gerará ciphertexts distintos a cada cifragem.
+   * **Finalidade**: Mitiga ataques de frequência e análise de padrões em nomes comuns.
 
-> A regra de visibilidade é aplicada no servidor (`apps/usuarios/perfis.py`).
+3. **Gestão do Salt**:
+   * O segredo `PSEUDONIMIZACAO_SALT` reside unicamente no ambiente de execução do servidor (`.env`) e **nunca** é versionado no repositório Git.
 
-## 5. Retenção e descarte
+### 3.1 Implicações da Cifragem Reversível sob a LGPD
 
-- Os registros de acesso são mantidos pelo período necessário às finalidades de
-  gestão do campus. (Definir prazo institucional.)
-- A remoção de uma importação (`Importacao`) remove em cascata seus
-  `RegistroAcesso` e falhas associadas.
+> **Sobre a Reversibilidade**: A técnica adotada é a *pseudonimização reversível* (criptografia) e não a anonimização definitiva. Quem detém acesso ao segredo `PSEUDONIMIZACAO_SALT` e às chaves de aplicação é capaz de reverter todos os ciphertexts e identificar os titulares. A proteção das identidades repousa na governança e segurança do segredo de ambiente e nas credenciais do servidor.
 
-## 6. Solicitação de remoção
+* **Armazenamento de Dados Pessoais (PII)**: O sistema armazena dados de identificação (nome e credencial cifrados) para atender à **finalidade legítima** de auditoria de acessos e segurança patrimonial do campus (garantindo que um administrador possa identificar o titular em caso de incidentes).
+* **Minimização**: O acesso aos dados em texto claro é estritamente segregado por perfis de usuário diretamente na regra de negócio do servidor.
 
-Titulares podem solicitar informações ou remoção de dados pelos canais oficiais do
-IFBA. A localização de registros continua podendo usar o recálculo do HMAC a partir
-da credencial informada pelo solicitante; a conferência autorizada pode usar também
-os campos cifrados reversíveis armazenados no registro.
+## 4. Matriz de Controle de Acesso e Perfis
+
+O acesso aos dados descriptografados é restrito a usuários autenticados e varia conforme o perfil cadastrado no sistema (`UsuarioSistema`):
+
+* **Administrador (`admin`)**:
+  * Acesso completo de leitura e administração.
+  * Visualiza dados sensíveis descriptografados: **credencial completa**, **nome completo original** e **foto**.
+  * Acesso exclusivo ao Django Admin, gestão de usuários e Regras de Horário.
+* **Gestor (`gestor`)**:
+  * Perfil estritamente operacional de monitoramento e relatórios.
+  * Visualiza dados de forma mascarada/restrita:
+    * **Credencial Mascarada**: Apenas os 4 últimos dígitos são exibidos em claro (ex: `******1234`). Credenciais com 4 caracteres ou menos são totalmente substituídas por asteriscos (`****`).
+    * **Nome Oculto**: Substituído pelo caractere padrão (`—`).
+    * **Sem Foto**: O acesso à visualização da foto é bloqueado.
+
+> A regra de visibilidade e mascaramento é executada estritamente no backend (`apps/usuarios/perfis.py`). O navegador de um usuário com perfil `gestor` nunca recebe os dados em texto claro ou o ciphertext cru, eliminando o risco de vazamento por inspeção do código-fonte HTML ou requisições HTTP.
+
+## 5. Retenção e Descarte de Dados
+
+* **Prazo de Retenção**: Os registros de acesso e dados cifrados dos titulares são mantidos pelo período institucional recomendado para fins de auditoria interna de tráfego e segurança do IFBA.
+* **Fluxo de Exclusão**: Não há rotina de expurgo automático agendado (cronjob). A remoção é realizada em lote pelo administrador ao excluir uma `Importacao`, o que acarreta a deleção em cascata (física) de todos os registros de acesso (`RegistroAcesso`) e falhas associadas no banco de dados.
+
+## 6. Solicitação de Direitos do Titular (Acesso e Exclusão)
+
+Para atender a requisições de consulta ou exclusão de dados pessoais por parte do titular (Art. 18 da LGPD):
+
+1. O operador informa a credencial em claro fornecida pelo titular.
+2. O sistema realiza a cifragem determinística da credencial informada utilizando o algoritmo **AES-SIV** e o salt do ambiente (`PSEUDONIMIZACAO_SALT`).
+3. O valor cifrado resultante é utilizado para consultar diretamente a coluna `credencial_cifrada` no banco de dados.
+4. Isso permite localizar e isolar rapidamente todos os registros de acesso vinculados àquele titular para emissão de relatório ou exclusão, sem a necessidade de varrer ou descriptografar a base de dados inteira.
